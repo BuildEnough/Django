@@ -4,6 +4,7 @@
 
 <br>
 
+---
 2. source [가상환경이름]/Scripts/activate
    - source venv/Scripts/activate
    - . venv/Scripts/activate
@@ -17,12 +18,14 @@
 
 <br>
 
+---
 3. deactivate
    - 가상환경이 계속 실행 중이기 때문에 아무런 폴더에서 `deactivate`하면 가상환경 종료됨
    - **가상환경 종료**
 
 <br>
 
+---
 4. pip list
    - pip: 파이썬으로 작성된 패키지 라이브러리를 관리해주는 시스템
    - 가상환경을 처음 실행한 상태에서 `pip list`를 실행할 경우 아무것도 안나오는게 정상
@@ -30,6 +33,7 @@
 
 <br>
 
+---
 5. pip install django==[버전]
    - pip install django==3.2.13
    - `==`를 사용하지 않고 `pip install django`하면 django의 최신버전 설치됨
@@ -37,11 +41,13 @@
 
 <br>
 
+---
 6. pip list
    - django 패키지가 정상적으로 설치되었는지 확인
 
 <br>
 
+---
 7. pip freeze > requirements.txt
    - pip freeze: 현재 작업 환경(가상환경)에 설치되어 있는 패키지의 리스트를 모두 출력해줌
    - `requirements.txt` 이름을 바꿔도 상관 없지만 보통 `requirements.txt`로 함
@@ -49,12 +55,14 @@
 
 <br>
 
+---
 8. pip install -r requirements.txt
    - `r`: read라는 의미
    - **설정파일 `requirements.txt`에 작성된 내용에 따라 패키지가 일괄 설치됨**
 
 <br>
 
+---
 9. django-admin startproject [프로젝트_이름] [프로젝트_시작경로]
    - django-admin startproject pjt .
    - `.`에 따라 `manage.py` 파일의 생성 여부 나뉨
@@ -69,6 +77,7 @@
 
 <br>
 
+---
 10.   python manage.py runserver
 ![서버 확인](image/../20221015/image/python%20manage.py%20runserver.png)
       - url에 `localhost:8000` 입력
@@ -82,6 +91,7 @@
 
 <br>
 
+---
 11.  [프로젝트] 안의 `settings.py` 세팅
   ```python
   LANGUAGE_CODE = 'ko-kr'
@@ -92,12 +102,14 @@
 
 <br>
 
+---
 12. python manage.py startapp [생성할_app_이름]
    - python manage.py startapp articles
    - **앱 생성**
 
 <br>
 
+---
 13. 프로젝트 settings.py 설정
   ![INSTALLED_APPS](20221015\image\INSTALLED_APPS.png)
   - `,` 꼭 붙이기
@@ -105,6 +117,7 @@
 
 <br>
 
+---
 14. 프로젝트 urls.py
    ![project_urls](20221015/image/project_urls.png)
     ```python
@@ -119,6 +132,7 @@
 
 <br>
 
+---
 15. 순서
   - 1번 urls.py(url 등록)
   - 2번 views.py(함수 생성)
@@ -126,6 +140,7 @@
 
 <br>
 
+---
 16. 생성한 앱 urls.py 생성(등록)
     - urlpatterns 추가
     ![앱urls](20221015/image/앱urls.jpg)
@@ -134,6 +149,7 @@
 
 <br>
 
+---
 17. 생성한 앱 view.py 함수 정의
   ![앱views](20221015/image/앱views.png)
     ```python
@@ -145,6 +161,7 @@
 
 <br>
 
+---
 18. Template 생성
     - 20221015(전체 폴더) => articles(앱) => templates(폴더 생성) => articles(폴더 생성) => index.html(파일 생성)
     - `python manage.py runserver` 실행
@@ -154,6 +171,7 @@
 
 <br>
 
+---
 19. 점검
     ![URL요청](20221015/image/점검1.png)
     - URL 요청
