@@ -71,14 +71,14 @@
 
 10.   python manage.py runserver
 ![서버 확인](image/../20221015/image/python%20manage.py%20runserver.png)
-   - url에 `localhost:8000` 입력
-   - 정상적으로 앞의 내용을 실행했다면 표시된 화면이 나옴
-   - `manage.py`: django 명령어를 인식하기 위한 중간역할, django의 명령어 인터페이스(궁금하면 직접 `manage.py` 열어보기)
-   - 서버 실행 후 항상 `터미널` 에서 로그 확인
-   - 포트 변경: `python manage.py runserver [원하는 포트 번호]`
-   - 포트 변경: `python manage.py runserver 8080`
-   - 종료: `ctrl + c`
-   - **서버 구동**
+      - url에 `localhost:8000` 입력
+      - 정상적으로 앞의 내용을 실행했다면 표시된 화면이 나옴
+      - `manage.py`: django 명령어를 인식하기 위한 중간역할, django의 명령어 인터페이스(궁금하면 직접 `manage.py` 열어보기)
+      - 서버 실행 후 항상 `터미널` 에서 로그 확인
+      - 포트 변경: `python manage.py runserver [원하는 포트 번호]`
+      - 포트 변경: `python manage.py runserver 8080`
+      - 종료: `ctrl + c`
+      - **서버 구동**
 
 <br>
 
@@ -88,7 +88,7 @@
 
   TIME_ZONE = 'Asia/Seoul'
   ```
-   - `python manage.py runserver`를 실행했을 경우 한국시간과 한국어로 변경됨
+  - `python manage.py runserver`를 실행했을 경우 한국시간과 한국어로 변경됨
 
 <br>
 
@@ -99,9 +99,9 @@
 <br>
 
 13. 프로젝트 settings.py 설정
-   ![INSTALLED_APPS](20221015\image\INSTALLED_APPS.png)
-   - `,` 꼭 붙이기
-   - **앱 등록**
+  ![INSTALLED_APPS](20221015\image\INSTALLED_APPS.png)
+  - `,` 꼭 붙이기
+  - **앱 등록**
 
 <br>
 
@@ -120,9 +120,9 @@
 <br>
 
 15. 순서
-  1. urls.py(url 등록)
-  2. views.py(함수 생성)
-  3. templates(template 생성)
+  - 1번 urls.py(url 등록)
+  - 2번 views.py(함수 생성)
+  - 3번 templates(template 생성)
 
 <br>
 
@@ -131,6 +131,8 @@
     ![앱urls](20221015/image/앱urls.jpg)
     - `views.index`가 1번으로 가고, 이것을 index라는 이름으로 부름
     ![앱urls_주석](20221015/image/앱urls_주석.png)
+
+<br>
 
 17. 생성한 앱 view.py 함수 정의
   ![앱views](20221015/image/앱views.png)
@@ -141,12 +143,16 @@
         return render(request, "articles/index.html")
     ```
 
+<br>
+
 18. Template 생성
     - 20221015(전체 폴더) => articles(앱) => templates(폴더 생성) => articles(폴더 생성) => index.html(파일 생성)
     - `python manage.py runserver` 실행
     - `localhost:8000/articles` 검색 후 실행되는지 확인
     - 실행 안될 경우
       - 프로젝트 폴더, 앱 폴더에서 `""` 혹은 오타 살펴보기
+
+<br>
 
 19. 점검
     ![URL요청](20221015/image/점검1.png)
