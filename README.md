@@ -111,14 +111,14 @@
 
 ---
 13. 프로젝트 settings.py 설정
-  ![INSTALLED_APPS](20221015\image\INSTALLED_APPS.png)
+  ![INSTALLED_APPS](20221015/image/INSTALLED_APPS.png)
   - `,` 꼭 붙이기
   - **앱 등록**
 
 <br>
 
 ---
-14. 프로젝트 urls.py
+14.  프로젝트 urls.py
    ![project_urls](20221015/image/project_urls.png)
     ```python
     from django.contrib import admin
@@ -129,6 +129,7 @@
         path("articles", include(articles.urls)),
     ]
     ```
+    - include를 활용: 공간적 분리
 
 <br>
 
@@ -144,13 +145,23 @@
 16. 생성한 앱 urls.py 생성(등록)
     - urlpatterns 추가
     ![앱urls](20221015/image/앱urls.jpg)
-    - `views.index`가 1번으로 가고, 이것을 index라는 이름으로 부름
+    - `views.index`가 [동그라미 1번]으로 가고, 이것을 index라는 이름으로 부름
+    - `""` [동그라미 1번] 주소로 요청하면 views에 있는 index함수로 응답
+    - url 대신 이름을 index로 지정
     ![앱urls_주석](20221015/image/앱urls_주석.png)
+    - app_name: url namespace(url을 이름으로 분류하는 기능, url을 앱별로 분류하는 기능)
+    - app_name이 없으면: 다른 앱에서 `index`라는 이름을 사용하지 못함(동일한 이름은 장고 프로젝트에서 1개만 사용할 수 있기 때문)
+    - 예를 들면
+      ```python
+      path('', views.index, name='index')
+      path('', views.index, name='index2')
+      path('', views.index, name='index3')
+      ```
 
 <br>
 
 ---
-17. 생성한 앱 view.py 함수 정의
+17.  생성한 앱 view.py 함수 정의
   ![앱views](20221015/image/앱views.png)
     ```python
     from django.shortcuts import render
@@ -175,6 +186,7 @@
 19. 점검
     ![URL요청](20221015/image/점검1.png)
     - URL 요청
+    - 
     ![서버 요청](20221015/image/점검2.png)
     - 서버로 요청
     ![앱 urls.py](20221015/image/점검3.jpg)
