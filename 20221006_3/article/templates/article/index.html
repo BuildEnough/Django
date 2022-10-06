@@ -14,13 +14,11 @@
     <input type="submit" value="추가">
   </form>
 
-
-  <!-- {{ articles }} -->
-  <ul>
-    <li> 실습a </li>
-    <li> 실습b </li>
-    <li> 실습c </li>
-  </ul>
+  {% for article in articles %}
+  <li>{{ article.pk }} - {{ article.content }} - {{ article.created_at }} - {{ article.updated_at}}
+    <a href="{% url 'article:delete' article.pk %}">삭제</a>
+  </li>
+  {% endfor %}
 </body>
 
 </html>

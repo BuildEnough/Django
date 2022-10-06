@@ -394,3 +394,110 @@
 <br>
 
 ---
+39. 변수확인
+   - 앱의 html 코드
+   ![변수확인](image/변수확인.png)
+   ![변수확인html](image/변수확인html.png)
+   - 이름: QuerySet
+   - 대괄호[]로 닫혀있기 때문에 리스트를 의미함
+   - 리스트는 반복해서 출력해야함
+
+<br>
+
+---
+40. DTL for문 사용
+   - DTL(Django Template Language)
+   ![DTL_for문](image/DTL_for문.png)
+   - 변수(articles)을 article로 반복
+   - {% endfor %}를 사용하여 반복문 종료
+   - {{ article }}을 사용하여 나타날 항목 추가
+   ![DTL_크롬](image/DTL_크롬.png)
+   - 표시되지만 원하는 데이터 값이 아님
+
+<br>
+
+---
+41. 원하는 데이터 표시
+   - 생성한 앱의 models.py의 설계도를 참고하여 만들 수 있음
+   ![앱models](image/앱models.png)
+   
+<br>
+
+   ![원하는데이터불러오기](image/데이터불러오기html.png)
+   ![크롬화면](image/원하는데이터불러오기_크롬.png)
+   - article뒤에 .[원하는클래스의 지정된 변수값]을 사용하여 불러올 수 있음
+
+<br>
+
+---
+42. 이상한 점
+   ![이상한점](image/이상한점.png)
+   - index와 create 함수 모두 `index.html`을 응답으로 templates를 제공함
+   - create는 데이터를 만들지만 출력 안됨
+   - 이유는 index함수에 있는 `context` 변수가 create함수에 없기 때문
+
+<br>
+
+---
+43. 이상한 점 해결(정답 아님)
+   ![context추가](image/이상함_context추가.jpg)
+   - create에도 context 함수를 추가
+   ![해결한 크롬창](image/이상한점_해결.png)
+   - **하지만 context를 추가하는 것이 정답 아님**
+
+<br>
+
+---
+44. 이상한 점 해결(redirect)
+   ![redirect사용](image/redirect.png)
+   - `render`대신 `redirect` 사용
+   - article에 index 요청
+   - create 주소가 아닌 index로 돌아오게됨
+
+<br>
+
+---
+## delete
+45. a태그 추가
+   ![a태그 추가](image/delete_a태그.jpg)
+   - 삭제 버튼 만들어 줌
+
+<br>
+
+---
+46. url 만들기
+   ![url](image/delete_url.jpg)
+   - delete 할때 pk값이 필요함
+   - pk 전달방법: `article:pk`
+   - 각각의 pk 값이 동적인자(url 변수 사용 하듯이 사용)로 전달됨
+
+<br>
+
+---
+47. delete path 만들기
+   ![path 만들기](image/delete_path.png)
+   - 동적인자 사용: `<int:article_pk>`
+     - article_pk라는 인자(함수에서 만듬)
+   - int타입 생략 가능하지만, 타입 지정해도됨
+
+<br>
+
+---
+48. delete 함수 만들기
+   ![delete_함수](image/delete_함수.jpg)
+   - `views.py`에서 함수 만들기(view에 대한 함수 만들기)
+   - 1번: article_pk라는 인자 받음
+   - 2번: article_는 삭제할 값을 불러와 저장하는 변수
+   - `article_.delete()`: (적인자로 인해 전달받은 값을 불러와서 delete함
+   - 삭제 전
+   ![삭제전](image/delete_삭제전.png)
+
+<br>
+
+   - 삭제 후
+   ![삭제후](image/delete_삭제후.png)
+
+<br>
+
+---
+# update
