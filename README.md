@@ -79,7 +79,7 @@
 
 ---
 10.   python manage.py runserver
-![서버 확인](image/../20221015/image/python%20manage.py%20runserver.png)
+![서버 확인](image/python%20manage.py%20runserver.png)
       - url에 `localhost:8000` 입력
       - 정상적으로 앞의 내용을 실행했다면 표시된 화면이 나옴
       - `manage.py`: django 명령어를 인식하기 위한 중간역할, django의 명령어 인터페이스(궁금하면 직접 `manage.py` 열어보기)
@@ -92,7 +92,7 @@
 <br>
 
 ---
-11.  [프로젝트] 안의 `settings.py` 세팅
+1.   [프로젝트] 안의 `settings.py` 세팅
   ```python
   LANGUAGE_CODE = 'ko-kr'
 
@@ -103,7 +103,7 @@
 <br>
 
 ---
-12. python manage.py startapp [생성할_app_이름]
+1.  python manage.py startapp [생성할_app_이름]
    - python manage.py startapp articles
    - **앱 생성**
 
@@ -111,15 +111,17 @@
 
 ---
 13. 프로젝트 settings.py 설정
-  ![INSTALLED_APPS](20221015/image/INSTALLED_APPS.png)
+
+
+  ![INSTALLED_APPS](image/INSTALLED_APPS.png)
   - `,` 꼭 붙이기
   - **앱 등록**
 
 <br>
 
 ---
-14.  프로젝트 urls.py
-   ![project_urls](20221015/image/project_urls.png)
+1.  프로젝트 urls.py
+   ![project_urls](image/project_urls.png)
     ```python
     from django.contrib import admin
     from django.urls import path, include
@@ -134,7 +136,7 @@
 <br>
 
 ---
-15. 순서
+1.  순서
   - 1번 urls.py(url 등록)
   - 2번 views.py(함수 생성)
   - 3번 templates(template 생성)
@@ -144,11 +146,11 @@
 ---
 16. 생성한 앱 urls.py 생성(등록)
     - urlpatterns 추가
-    ![앱urls](20221015/image/앱urls.jpg)
+    ![앱urls](image/앱urls.jpg)
     - `views.index`가 [동그라미 1번]으로 가고, 이것을 index라는 이름으로 부름
     - `""` [동그라미 1번] 주소로 요청하면 views에 있는 index함수로 응답
     - url 대신 이름을 index로 지정
-    ![앱urls_주석](20221015/image/앱urls_주석.png)
+    ![앱urls_주석](image/앱urls_주석.png)
     - app_name: url namespace(url을 이름으로 분류하는 기능, url을 앱별로 분류하는 기능)
     - app_name이 없으면: 다른 앱에서 `index`라는 이름을 사용하지 못함(동일한 이름은 장고 프로젝트에서 1개만 사용할 수 있기 때문)
     - 예를 들면
@@ -161,8 +163,8 @@
 <br>
 
 ---
-17.  생성한 앱 view.py 함수 정의
-  ![앱views](20221015/image/앱views.png)
+1.   생성한 앱 view.py 함수 정의
+  ![앱views](image/앱views.png)
     ```python
     from django.shortcuts import render
 
@@ -173,7 +175,7 @@
 <br>
 
 ---
-18. Template 생성
+1.  Template 생성
     - 20221015(전체 폴더) => articles(앱) => templates(폴더 생성) => articles(폴더 생성) => index.html(파일 생성)
     - `python manage.py runserver` 실행
     - `localhost:8000/articles` 검색 후 실행되는지 확인
@@ -183,16 +185,15 @@
 <br>
 
 ---
-19. 점검
-    ![URL요청](20221015/image/점검1.png)
+19. 점검  
+    ![URL요청](image/점검1.png)
     - URL 요청
-    - 
-    ![서버 요청](20221015/image/점검2.png)
+    ![서버 요청](image/점검2.png)
     - 서버로 요청
-    ![앱 urls.py](20221015/image/점검3.jpg)
+    ![앱 urls.py](image/점검3.jpg)
     - 생성한 앱 폴더의 urls.py안의
     - urlpatterns의 목록 안에서
     - views.py에 있는 index함수 실행
-    ![앱 views.py](20221015/image/점검4.jpg)
+    ![앱 views.py](image/점검4.jpg)
     - 생성한 앱 폴더의 views.py안의
     - html 파일을 불러옴
