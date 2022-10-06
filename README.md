@@ -197,3 +197,200 @@
     ![앱 views.py](image/점검4.jpg)
     - 생성한 앱 폴더의 views.py안의
     - html 파일을 불러옴
+
+<br>
+
+---
+# CRUD
+20. 모델 정의
+  - 1번: 클래스 정의
+  - 2번: migrations 파일 생성
+  - 3번: DB반영(migrate)
+
+<br>
+
+---
+21. 요구사항에 따른 모델 작성
+   - 예시
+   ![요구사항](image/요구사항.png)
+
+<br>
+
+---
+21.  생성한 앱의 models.py 클래스 정의
+   ```python
+   from django.db import models
+
+   class Article(models.Model):
+      content = models.CharField(max_length=80)
+      completed = models.BooleanField(default=False)
+   ```
+   ![클래스](image/클래스.jpg)
+   - Article(1번)은 Models(2번)에 있는 Model(3번)을 상속받아서 모델 만듬
+   ![클래스2](image/클래스2.png)
+
+<br>
+
+---
+23. makemigrations 파일 생성
+   - python manage.py makemigrations
+   ![마이그레이션 경로](image/마이그레이션_경로.png)
+   - 경로를 따라가보면
+   ![마이그레이션](image/마이그레이션.png)
+   - `0001_initial.py` 라는 파일이 생성됨
+   - db.sqlite3의 새로운 테이블을 만들기 위한 설계도
+   - `migrate` 하기 전까지 아무런 내용 없음
+
+<br>
+
+---
+24. migrate
+   - python manage.py migrate
+   ![마이그레이트](image/마이그레이트.jpg)
+   - 1번: 앱 이름
+   - 2번: 모델 이름
+
+<br>
+
+---
+25. DB 확인
+   - python manage.py showmigrations
+   - DB가 제대로 생성되었는지 확인할 수 있다
+
+<br>
+
+---
+# CRUD 구현
+26. CREATE 생성
+   - 기능을 만들때: URL에 mapping 되는 VIEW 함수는 각각 1개씩 필요함(특정 URL의 기능들이 다르기 때문)
+   - 기능 추가
+     - URL 생성 => VIEW 함수
+     - URL에 대응되는 VIEW 함수를 새롭게 생성
+
+<br>
+
+---
+27. form 태그
+   - 사용자에게 정보를 입력받을 때 form 태그 사용
+   - `html` 파일에서 사용
+   ```html
+   <body>
+   <form action="% url 'article:create' %">
+   </form>
+   </body>
+   ```
+   - `create`라는 name을 가진 주소를 요청(`create`라는 path를 만들어줘야함)
+   - `<form action="% url 'article:create' %">`에서
+   - article은 app_name 지정해 둔 것
+
+<br>
+
+---
+28. URL(path 만들기)
+   - 생성한 앱의 `urls.py`에서 path를 만들어 줌
+   ![create_path](image/create_path.jpg)
+   - 1번: 주소를 create로 요청
+   - 2번: views는 create 함수 요청 
+   - 3번: name은 create
+   - 아직 create 함수를 만들지 않았기 때문에 오류 발생
+
+<br>
+
+---
+29. view(함수 작성)
+   ```python
+   def create(request):
+      return render(request, "article/index.html")
+   ```
+
+<br>
+
+---
+30. form 데이터 생성
+   - html 파일 form 에서 views.py에 있는 함수로 데이터를 넘겨줘야 함
+   - 함수안에 `content` 생성
+   - templates에서 데이터를 get해야 됨
+     - `request.GET.get()` 사용
+   - html 파일의 input 태그의 name 속성에 값 지정(데이터의 이름을 지정)
+   - html 예시
+   ![create_html](image/create_html.jpg)
+   - views 예시
+   ![create_views](image/create_views.jpg)
+
+<br>
+
+---
+31. 입력 되었는지 확인
+   - view.py에 print문 추가
+   - html 페이지
+   ![html_print문](image/html_print.png)
+   - views.py
+   ![view_print문](image/views_print.png)
+   - terminal
+   ![terminal_print문](image/terminal_print.png)
+   - 즉, **입력한 문장을 content가 정확히 받았다는 의미**
+
+<br>
+
+---
+32. models를 받아옴
+   - 생성한 앱의 모델의 데이터 생성
+   - model을 import
+   ![모델앱import](image/create_model_import.jpg)
+   ![모델앱import2](image/create_model_import2.jpg)
+
+<br>
+
+---
+33. DB 저장
+   - 생성한 앱의 views.py
+   ![DB저장](image/DB생성.jpg)
+   - 1번: 클래스
+   - 2번: objects에
+   - 3번: create 메소드 사용
+   - 4번: 필드(속성)
+   - 5번: 값
+
+<br>
+
+---
+34. 저장 확인
+   ![DB저장_html](image/DB저장_html.png)
+   ![DB저장_sqlite3](image/DB저장_sqlite3.png)
+   ![DB저장_sql](image/DB저장_sql.png)
+   
+<br>
+
+---
+35. 데이터 불러오기
+   - [클래스].objects.all(): 데이터 불러오는 ORM 코드
+   ![DB불러오기](image/DB불러오기.jpg)
+   
+<br>
+
+---
+36. 변수 할당
+   - 불러온 데이터를 변수에 할당
+   - articles라는 변수에 할당
+   ![DB변수할당](image/DB변수할당.jpg)
+   
+<br>
+
+---
+37. 변수 출력
+   - 딕셔너리 만든 후 변수 출력
+   - 딕셔너리(context)
+   ![DB딕셔너리변수](image/DB딕셔너리변수.jpg)
+   
+<br>
+
+---
+38. 인자 넘기기
+   ![DB인자넘기기](image/DB인자넘기기.jpg)
+   - 함수에 인자를 넘김
+   - templates 변수에서 2번을 출력하기 위해 1번을 넘겨줌
+   - render라는 함수에 context 인자 넘김(templates 파일에서 변수들을 사용하기 위함)
+
+<br>
+
+---
