@@ -92,7 +92,7 @@
 <br>
 
 ---
-1.   [프로젝트] 안의 `settings.py` 세팅
+11.   [프로젝트] 안의 `settings.py` 세팅
   ```python
   LANGUAGE_CODE = 'ko-kr'
 
@@ -103,7 +103,7 @@
 <br>
 
 ---
-1.  python manage.py startapp [생성할_app_이름]
+12.  python manage.py startapp [생성할_app_이름]
    - python manage.py startapp articles
    - **앱 생성**
 
@@ -120,7 +120,7 @@
 <br>
 
 ---
-1.  프로젝트 urls.py
+14.  프로젝트 urls.py
    ![project_urls](image/project_urls.png)
     ```python
     from django.contrib import admin
@@ -136,7 +136,7 @@
 <br>
 
 ---
-1.  순서
+15.  순서
   - 1번 urls.py(url 등록)
   - 2번 views.py(함수 생성)
   - 3번 templates(template 생성)
@@ -163,7 +163,7 @@
 <br>
 
 ---
-1.   생성한 앱 view.py 함수 정의
+17.   생성한 앱 view.py 함수 정의
   ![앱views](image/앱views.png)
     ```python
     from django.shortcuts import render
@@ -175,7 +175,7 @@
 <br>
 
 ---
-1.  Template 생성
+18.  Template 생성
     - 20221015(전체 폴더) => articles(앱) => templates(폴더 생성) => articles(폴더 생성) => index.html(파일 생성)
     - `python manage.py runserver` 실행
     - `localhost:8000/articles` 검색 후 실행되는지 확인
@@ -217,7 +217,7 @@
 <br>
 
 ---
-21.  생성한 앱의 models.py 클래스 정의
+22.  생성한 앱의 models.py 클래스 정의
    ```python
    from django.db import models
 
