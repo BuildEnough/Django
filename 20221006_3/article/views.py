@@ -25,3 +25,6 @@ def delete(request, article_pk):
     article_.delete()
 
     return redirect("article:index")
+
+def edit(request):
+    return render(request, "article/edit.html")

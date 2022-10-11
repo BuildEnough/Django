@@ -16,7 +16,12 @@
 
   {% for article in articles %}
   <li>{{ article.pk }} - {{ article.content }} - {{ article.created_at }} - {{ article.updated_at}}
-    <a href="{% url 'article:delete' article.pk %}">삭제</a>
+    <a href="{% url 'article:delete' article.pk %}">
+      삭제
+    </a>
+    <a href="{% url 'edit' %}">
+
+    </a>
   </li>
   {% endfor %}
 </body>

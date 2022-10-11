@@ -500,4 +500,55 @@
 <br>
 
 ---
-# update
+# UPDATE
+49. a태그 만들기
+   - html의 body 안에 a태그를 만들어줌
+   - 더미페이지 만들기
+     - edit라는 더미페이지
+
+<br>
+
+   - templates에 수정을 원하는 html 파일에 a 태그 만들기
+   ```html
+   <a href="{% url 'edit' %}">
+
+   </a>
+   ```
+   
+<br>
+  
+50. path 만들기
+   - 생성한 앱의 `urls.py`에서 path 만들기
+   ![update_url](image/update_url.jpg)
+   - path를 만들어 줬으므로 생성한 앱의 `views.py`에서 함수를 정의해줘야 함
+
+<br>
+
+---
+51. 함수 만들기
+   ```python
+   def edit(request)
+    return render(request, "artilce/edit.html")
+   ```
+   - 생성한 앱의 `views.py` 에서 함수 만들기
+   - 다음으로 templates안의 article에 `edit.html`이 없으므로
+   - `edit.html ` 만들어주기
+
+<br>
+
+---
+52. html파일 만들기(update)
+   - update html 만들때 create html을 가져옴(글 수정과 글 생성 양식이 비슷하기 때문)
+   - update 는 read + create
+   - read: 수정페이지에 데이터 출력
+
+<br>
+
+---
+
+# URL 명시
+```html
+{% url [특정 path] %}
+```
+- URL을 명시할 때 `%`로 열고 `{}`로 닫아줌
+- `특정 path`는 생성한 앱의 `urls.py`에서 설정해줌
