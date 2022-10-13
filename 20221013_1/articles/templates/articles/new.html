@@ -9,7 +9,15 @@
 </head>
 
 <body>
+  <form action="{% url 'articles:create' %}">
+    <!-- <form action="/articles/create"> -->
+    <label for="title">제목: </label>
+    <input type="text" name="title" id="title">
 
+    <label for="content">내용: </label>
+    <textarea name="content" id="content" cols="30" rows="10"></textarea>
+    <input type="submit" value="글쓰기">
+  </form>
 </body>
 
 </html>
