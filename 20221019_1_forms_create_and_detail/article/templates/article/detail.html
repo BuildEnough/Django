@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at }} | {{ article.updated_at }}</h2>
+<p>{{ article.content }}</p>
+{% endblock %}
