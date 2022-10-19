@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>메인 화면</h1>
+
+{% for article in articles %}
+    <p>{{ article.title }}</p>
+    <p>{{ article.content }}</p>
+    <p>{{ article.created_at }} {{ article.updated_at }}</p>
+{% endfor %}
+<p><a href="{% url 'article:new' %}">글 작성하기</a></p>
+{% endblock %}

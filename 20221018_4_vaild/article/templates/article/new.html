@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<form action="{% url 'article:create' %}" method="POST">
+    {% csrf_token %}
+    {{ article_form.as_p}}
+    <input type="submit" value="작성">
+</form>
+<p><a href="{% url 'article:index' %}">메인 화면</a></p>
+{% endblock %}
