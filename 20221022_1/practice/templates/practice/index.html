@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+{% for practice in practices %}
+<p>{{ practice.title }}</p>
+<p>{{ practice.content }}</p>
+<p>{{ practice.created_at}} | {{ practice.updated_at }}</p>
+<p></p>
+{% endfor %}
+<a href="{% url 'practice:new' %}">글 작성</a>
+{% endblock %}
