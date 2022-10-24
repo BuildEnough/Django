@@ -8,15 +8,7 @@ def index(request):
     context = {
         'articles': articles
     }
-
     return render(request, 'articles/index.html', context)
-
-def create(request):
-    article_form = ArticleForm()
-    context = {
-        'article_form': article_form
-    }
-    return render(request, 'articles/create.html', context)
 
 def new(request):
     if request.method == 'POST':

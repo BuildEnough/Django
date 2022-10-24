@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<a href="{% url 'articles:create' %}">글 작성</a>
+<a href="{% url 'articles:new' %}">글 작성</a>
 {% for article in articles %}
 <p><a href="{% url 'articles:detail' article.pk %}">{{ article.pk }}</a></p>
 <p>{{ article.title }}</p>
