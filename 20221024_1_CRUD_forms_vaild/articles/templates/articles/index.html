@@ -1,5 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %">
+<!-- css는 적용이 잘 안되네... base.html에 있는 <head>부분에 안넣어서 그런거 같긴함-->
+
+<h1>메인 페이지</h1>
+
+<p><img src="{% static 'images/image1.jpg' %}" alt="image1"></p>
+
 <a href="{% url 'articles:new' %}">글 작성</a>
 {% for article in articles %}
 <p><a href="{% url 'articles:detail' article.pk %}">{{ article.pk }}</a></p>

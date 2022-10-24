@@ -32,6 +32,9 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'articles',
+    'django_bootstrap5',
+    # pip3 install django-bootstrap5
+    # 터미널에 입력
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

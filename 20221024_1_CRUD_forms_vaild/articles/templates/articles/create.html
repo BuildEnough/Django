@@ -1,8 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
 <form action="{% url 'articles:new' %}" method="POST">
     {% csrf_token %}
-    {{ article_form.as_p }}
+
+    {% bootstrap_form article_form %}
+
+    {# article_form.as_p #}<!-- 주석처리 함 -->
     <input type="submit" value="글 작성">
 </form>
 
