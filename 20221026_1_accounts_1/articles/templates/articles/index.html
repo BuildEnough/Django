@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block body %}
+{% load static %}
+<h1>메인 페이지</h1>
+
+<p><img src="{% static 'images/image1.jpg' %}" alt="image1"></p>
+
+<a href="{% url 'articles:new' %}">글 작성</a>
+{% for article in articles %}
+<p><a href="{% url 'articles:detail' article.pk %}">{{ article.pk }}</a></p>
+<p>{{ article.title }}</p>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} | {{ article.updated_at }}</p>
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
