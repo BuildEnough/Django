@@ -6,7 +6,8 @@
 
 ---
 2. source [가상환경이름]/Scripts/activate
-   - source venv/Scripts/activate
+   - Window: source venv/Scripts/activate
+   - Mac: source venv/bin/activate
    - . venv/Scripts/activate
    - `.`을 사용할 경우 현재 폴더 내에서 실행한다는 의미
    - 만약 `cd venv`, 즉 venv 안에서 실행할 경우의 코드는
@@ -78,7 +79,7 @@
 <br>
 
 ---
-10.   python manage.py runserver
+10. python manage.py runserver
 ![서버 확인](image/python%20manage.py%20runserver.png)
       - url에 `localhost:8000` 입력
       - 정상적으로 앞의 내용을 실행했다면 표시된 화면이 나옴
@@ -92,7 +93,7 @@
 <br>
 
 ---
-11.   [프로젝트] 안의 `settings.py` 세팅
+11. [프로젝트] 안의 `settings.py` 세팅
   ```python
   LANGUAGE_CODE = 'ko-kr'
 
@@ -104,7 +105,7 @@
 
 ---
 12.  python manage.py startapp [생성할_app_이름]
-   - python manage.py startapp articles
+   - `python manage.py startapp articles`
    - **앱 생성**
 
 <br>
@@ -185,16 +186,70 @@
 <br>
 
 ---
-19. 점검  
+
+18.-1 templates 활용
+   - 프로젝트 `settings.py`에 `TEMPLATES`에서
+   ```python
+   TEMPLATES = [
+      {
+         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+         'DIRS': [BASE_DIR / 'templates'],
+         'APP_DIRS': True,
+         'OPTIONS': {
+               'context_processors': [
+                  'django.template.context_processors.debug',
+                  'django.template.context_processors.request',
+                  'django.contrib.auth.context_processors.auth',
+                  'django.contrib.messages.context_processors.messages',
+               ],
+         },
+      },
+   ]
+   ```
+   - `'DIRS': [BASE_DIR / 'templates'],` 수정
+   - 프로젝트와 동일한 경로에 `templates` 만듬
+   - 생성한 앱의 `views.py`에서 경로에 따라 `base.html` 만들어줌
+
+<br>
+
+---
+
+18.-2 base.html
+   - `base.html`에 넣어줌
+   ```html
+      {% block content %}
+      {% endblock %}
+   ```
+   - `base.html`을 사용하는 html은 `{% extends 'base.html' %}`사용해야 함
+   ```html
+      {% extends 'base.html' %}
+      {% block content %}
+      index
+      {% endblock %}
+   ```
+
+<br>
+
+---
+19.  점검  
     ![URL요청](image/점검1.png)
+    <br>
     - URL 요청
+    <br>
+    <br>
     ![서버 요청](image/점검2.png)
     - 서버로 요청
+    <br>
+    <br>
     ![앱 urls.py](image/점검3.jpg)
+    <br>
     - 생성한 앱 폴더의 urls.py안의
     - urlpatterns의 목록 안에서
     - views.py에 있는 index함수 실행
+    <br>
+    <br>
     ![앱 views.py](image/점검4.jpg)
+    <br>
     - 생성한 앱 폴더의 views.py안의
     - html 파일을 불러옴
 
@@ -202,7 +257,7 @@
 
 ---
 # CRUD
-20. 모델 정의
+20.  모델 정의
   - 1번: 클래스 정의
   - 2번: migrations 파일 생성
   - 3번: DB반영(migrate)
@@ -221,9 +276,11 @@
    ```python
    from django.db import models
 
-   class Article(models.Model):
-      content = models.CharField(max_length=80)
-      completed = models.BooleanField(default=False)
+   class Articles(models.Model):
+      title = models.CharField(max_length=20)
+      content = models.TextField()
+      created_at = models.DateTimeField(auto_now_add=True)
+      updated_at = models.DateTimeField(auto_now=True)
    ```
    ![클래스](image/클래스.jpg)
    - Article(1번)은 Models(2번)에 있는 Model(3번)을 상속받아서 모델 만듬
@@ -266,6 +323,7 @@
    - 기능 추가
      - URL 생성 => VIEW 함수
      - URL에 대응되는 VIEW 함수를 새롭게 생성
+   - `templates`에 `create.html`만들어야 함
 
 <br>
 
@@ -552,3 +610,12 @@
 ```
 - URL을 명시할 때 `%`로 열고 `{}`로 닫아줌
 - `특정 path`는 생성한 앱의 `urls.py`에서 설정해줌
+
+<br>
+
+---
+
+<br>
+
+---
+
