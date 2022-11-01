@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at }} | {{ article.updated_at }}</h2>
+<p>{{ article.content }}</p>
+
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
