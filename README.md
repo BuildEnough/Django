@@ -619,4 +619,18 @@ def delete(request, pk):
 <a href="{% url 'articles:update' article.pk %}">글 수정</a>
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
+```  
+
+<br>
+
+---
+22. admin
+    - `$ python manage.py createsuperuser `
+```python
+# articles/admin.py
+from django.contrib import admin
+from .models import Article
+
+# Register your models here.
+admin.site.register(Article)
 ```
