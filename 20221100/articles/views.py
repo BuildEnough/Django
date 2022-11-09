@@ -21,7 +21,7 @@ def new(request):
     context = {
         'article_form': article_form
     }
-    return render(request, 'articles/create.html', context)
+    return render(request, 'articles/form.html', context)
 
 def detail(request, article_pk):
     article = Article.objects.get(pk=article_pk)
@@ -42,7 +42,7 @@ def update(request, pk):
     context = {
         'article_form': article_form
     }
-    return render(request, 'articles/update.html', context)
+    return render(request, 'articles/form.html', context)
 
 def delete(request, pk):
     article = Article.objects.get(pk=pk)

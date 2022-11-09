@@ -632,17 +632,20 @@ from django.contrib import admin
 from .models import Article
 
 # Register your models here.
-admin.site.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_at', 'updated_at')
+admin.site.register(Article, ArticleAdmin)
 ```
 
 <br>
 
 ---
 23. static
-    - 폴더들을 모듈로 관리
-    - 생성한 앱 안에 `static` 폴더 생성 => `static` 폴더 안에 이미지(`cowboy.png`) 생성
-    - css도 같은 방법으로 사용할 수 있음
-    <br>
+- 폴더들을 모듈로 관리
+- 생성한 앱 안에 `static` 폴더 생성 => `static` 폴더 안에 이미지(`cowboy.png`) 생성
+- css도 같은 방법으로 사용할 수 있음
+
+<br>
 
 - `{% load static %}`, `img`태그 불러오기
   - html 수정
@@ -737,15 +740,198 @@ INSTALLED_APPS = (
 {% bootstrap_javascript %}
 {% block content %}
 
-<form action="{% url 'articles:new' %}" method="POST">
+<form action="" method="POST">
     {% csrf_token %}
 
-    {% bootstrap_form article_form %}
-
     {# article_form.as_p #}
-    <input type="submit" value="입력">
+    {% comment %} <input type="submit" value="입력"> {% endcomment %}
+
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
   </form>
 
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
 ```
+
+<br>
+
+---
+25. form 커스텀
+```html
+<!-- articles/templates/articles/create.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+
+<form action="" method="POST">
+    {% csrf_token %}
+
+    {% for field in article_form %}
+    <p>
+      {{ field }}
+    </p>
+      {{ field.label_tag }}
+    {% endfor %}
+
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+  </form>
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+- input 태그 자체 커스텀 위 html에선 `{{ field }}` 설정
+  - forms.py 위젯 설정(autofocus, placeholder)
+  - articles/forms.py widgets 설정
+
+<br>
+
+---
+26. create, update 같은 페이지 사용
+- `update.html` 파일 이름 => `form.html`로 변경
+- `create 함수`, `update 함수`의  `return 값` 수정
+```python
+# article/views.py
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+
+<br>
+
+---
+27. 페이지 분기
+- `request`
+```html
+<!-- articles/templates/articles/forms.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+<h1>글 수정</h1>
+
+{{ request.path }}
+{{ request.GET }}
+
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+    <input type="submit" value="수정">
+</form>
+{% endblock %}
+```
+```html
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+<h1>글 수정</h1>
+
+{% if request.path == '/articles/new/' %}
+<h1> 생성 </h1>
+{% endif %}
+
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+    <input type="submit" value="수정">
+</form>
+{% endblock %}
+```
+```html
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+<h1>글 수정</h1>
+
+{{ request.resolver_match.url_name }}
+{% if request.path == '/articles/new/' %}
+<h1> 생성 </h1>
+{% endif %}
+
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+    <input type="submit" value="수정">
+</form>
+{% endblock %}
+```
+```html
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+
+{% if request.resolver_match.url_name == 'new' %}
+<h1> 생성 </h1>
+{% else %}
+<h1> 수정 </h1>
+{% endif %}
+
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+    <input type="submit" value="수정">
+</form>
+{% endblock %}
+```
+
+<br>
+
+---
+28. DateTime 바꾸기
+- django DATETIME Filter
+```html
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+---
+29. 회원가입, 로그인
