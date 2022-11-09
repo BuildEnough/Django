@@ -634,3 +634,118 @@ from .models import Article
 # Register your models here.
 admin.site.register(Article)
 ```
+
+<br>
+
+---
+23. static
+    - 폴더들을 모듈로 관리
+    - 생성한 앱 안에 `static` 폴더 생성 => `static` 폴더 안에 이미지(`cowboy.png`) 생성
+    - css도 같은 방법으로 사용할 수 있음
+    <br>
+
+- `{% load static %}`, `img`태그 불러오기
+  - html 수정
+```html
+<!-- articles/templates/articles/index.html -->
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<img src="{% static 'cowboy.png' %}" alt="">
+<a href="{% url 'articles:new' %}">글 작성</a>
+
+{% for article in articles %}
+<h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} {{ article.updated_at }}</p>
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
+```
+
+- 생성한 프로젝트의 `settings.py`안의 `STATIC_UR`에서 관리함
+- `settings.py`
+```python
+# pjt/settings.py
+STATIC_URL = '/static/'
+```
+
+<br>
+
+- 생성한 앱 안에 `static` 폴더 생성 => `static` 폴더 안에 `images` 폴더 안에 이미지(`cowboy.png`) 생성
+  - html 수정
+```html
+<!-- articles/templates/articles/index.html -->
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<img src="{% static 'images/cowboy.png' %}" alt="">
+<a href="{% url 'articles:new' %}">글 작성</a>
+
+{% for article in articles %}
+<h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} {{ article.updated_at }}</p>
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
+```
+
+<br>
+
+---
+24. bootstrap
+- 터미널: `pip install django-bootstrap5`
+```python
+INSTALLED_APPS = (
+# pjt/settings.py
+    # ...
+    "django_bootstrap5",
+    # ...
+)
+```
+
+<br>
+
+- html 수정
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- <link rel="stylesheet" href="{/% static css/style.css /%}"> -->
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
+```
+
+```html
+<!-- articles/templates/articles/create.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+
+<form action="{% url 'articles:new' %}" method="POST">
+    {% csrf_token %}
+
+    {% bootstrap_form article_form %}
+
+    {# article_form.as_p #}
+    <input type="submit" value="입력">
+  </form>
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```

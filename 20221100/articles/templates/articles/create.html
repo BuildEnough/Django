@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
 {% block content %}
+
 <form action="{% url 'articles:new' %}" method="POST">
     {% csrf_token %}
-    {{ article_form.as_p }}
+
+    {% bootstrap_form article_form %}
+
+    {# article_form.as_p #}
     <input type="submit" value="입력">
   </form>
 
