@@ -1174,5 +1174,103 @@ from django.contrib import admin
 from .models import User
 
 # Register your models here.
-admin.site.register(User)
+admin.site.register(User) 
+```
+
+<br>
+
+---
+35. User model => get_user_model
+- User model: 변경가능한 모델, 상속받아서 만들었지만 기본 내장 설정은 auth User
+- 즉, 직접 참조를 하지 않도록 함
+- admin 수정
+```python
+# accounts/admin.py
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+# from .models import User
+from django.contrib.auth import get_user_model
+
+# Register your models here.
+admin.site.register(get_user_model(), UserAdmin)
+```
+<br>
+
+- forms 수정
+```python
+# accounts/forms.py
+from django.contrib.auth.forms import UserCreationForm
+# from .models import User
+from django.contrib.auth import get_user_model
+
+class CustomUserCreationForm(UserCreationForm):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username',)
+```
+
+<br>
+
+---
+36. profile
+- urls 설정
+```python
+# account/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+    path('<int:pk>/', views.detail, name='detail'),
+]
+```
+<br>
+
+- views 추가
+```python
+# account/views.py
+from django.shortcuts import render, redirect
+# from django.contrib.auth.forms import UserCreationForm
+from .forms import CustomUserCreationForm
+# from .models import User
+from django.contrib.auth import get_user_model
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:index')
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+
+def detail(request, pk):
+    user = get_user_model.objects.get(pk=pk)
+    context = {
+        'user': user
+    }
+
+    return render(request, 'accounts/detail.html', context)
+```
+- `from .models import User`: 사용 금지
+- `from django.contrib.auth import get_user_model`: 사용
+- articles views와 다른점: user class를 참조하는 방법만 다름
+<br>
+
+- templates 설정
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+
+{% endblock %}
 ```
