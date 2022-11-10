@@ -938,7 +938,7 @@ def update(request, pk):
 <br>
 
 ---
-# 회원가입, 로그인
+# 회원가입
 29.  account 앱 생성
 - `$ python manage.py startapp accounts`
 ```python
@@ -1272,5 +1272,80 @@ def detail(request, pk):
 {% block content %}
 <h1>{{ user.username }}님의 프로필</h1>
 
+{% endblock %}
+```
+
+<br>
+
+---
+# 로그인
+37. login
+- path 설정
+```python
+# accounts/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+    path('login/', views.login, name='login'),
+    path('<int:pk>/', views.detail, name='detail'),
+]
+```
+<br>
+
+- views 수정
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm
+from django.contrib.auth import get_user_model
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:index')
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+
+def detail(request, pk):
+    user = get_user_model().objects.get(pk=pk)
+    context = {
+        'user': user
+    }
+
+    return render(request, 'accounts/detail.html', context)
+
+def login(request):
+    form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+```
+<br>
+
+- login html 생성
+```html
+<!-- articles/templates/accounts/login.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>로그인</h1>
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
 {% endblock %}
 ```

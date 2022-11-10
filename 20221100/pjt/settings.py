@@ -35,20 +35,20 @@ INSTALLED_APPS = [
     'accounts',
     'django_bootstrap5',
     'django_extensions',
-    'django.contrib.admin',
-    'django.contrib.auth',
+    'django.contrib.admin', # 관리자
+    'django.contrib.auth', # 유저/인증
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    'django.contrib.sessions', # 세션 관리
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', # 세션
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware', # CSRF
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # 인증
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
