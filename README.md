@@ -1349,3 +1349,52 @@ def login(request):
 </form>
 {% endblock %}
 ```
+<br>
+
+- 유효성 검사
+```python
+# accounts/views.py
+def login(request):
+    if request.method == 'POST':
+        # AuthenticationForm은 ModelForm 아니다
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            # form.save() # save 라는 명령어 없음: 모델 폼이 아니기 때문
+            # 세션 저장
+            # login 함수: request, user 객체를 인자로 받음
+            # user 객체: form에서 인증된 유저 정보를 받을 수 있음
+            auth_login(request, form.get_user())
+            return redirect('articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+```
+<br>
+
+- 모든 페이지 로그인 정보 표시
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <h1>{{ user }}</h1>
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+        </div>
+{% bootstrap_javascript %}
+</body>
+</html>
+```
