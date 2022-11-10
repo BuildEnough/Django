@@ -851,7 +851,9 @@ def update(request, pk):
 </form>
 {% endblock %}
 ```
+
 ```html
+<!-- articles/templates/articles/forms.html -->
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 {% bootstrap_css %}
@@ -871,7 +873,9 @@ def update(request, pk):
 </form>
 {% endblock %}
 ```
+
 ```html
+<!-- articles/templates/articles/forms.html -->
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 {% bootstrap_css %}
@@ -934,4 +938,241 @@ def update(request, pk):
 <br>
 
 ---
-29. 회원가입, 로그인
+# 회원가입, 로그인
+29.  account 앱 생성
+- `$ python manage.py startapp accounts`
+```python
+# pjt/settings.py
+INSTALLED_APPS = [
+    'articles',
+    'accounts',
+    'django_bootstrap5',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+```
+
+<br>
+
+---
+30. django extensions
+- `$ pip install django-extensions`
+- `$ pip install ipython`
+```python
+# pjt/settings.py
+INSTALLED_APPS = [
+    'articles',
+    'accounts',
+    'django_bootstrap5',
+    'django_extensions',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+```
+- `$ python manage.py shell_plus`
+- `$ Article.objects.create(title='제목1', content='내용1')`
+- `$ User.objects.create(username='sun', password='1q2w3e4r')`
+- `$ User.objects.create_user('kim', 'asdf@gmail.com', '1234')`
+- `$ authenticate(username='kim', password='1234')`
+
+<br>
+
+---
+31. account 사용 전 설정
+- url 수정
+```python
+# pjt/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('articles/', include('articles.urls')),
+    path('accounts/', include('accounts.urls')),
+]
+```
+<br>
+
+- settings 수정
+```python
+# pjt/settings.py
+AUTH_USER_MODEL = 'accounts.User'
+```
+<br>
+
+- models 수정
+```python
+# accounts/models.py
+# User model 직접 정의하는 것이 아닌 내장된 것을 활용
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+class User(AbstractUser):
+    pass
+# 프로젝트 초반에 작성하지 않으면 db.sqlite3 삭제 후 makemigrations => migrate
+```
+<br>
+
+- `accounts` => `urls.py` 생성
+```python
+# account/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+]
+```
+<br>
+
+- views 수정
+```python
+# accounts/views.py
+from django.shortcuts import render
+from django.contrib.auth.forms import UserCreationForm
+
+# Create your views here.
+def signup(request):
+    form = UserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+```
+<br>
+
+- templates 생성
+```html
+<!-- accounts/templates/accounts/signup.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>회원가입</h1>
+{{ form.as_p }}
+{% endblock %}
+```
+<br>
+
+- templates 수정
+```html
+<!-- accounts/templates/accounts/signup.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>회원가입</h1>
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endblock %}
+```
+<br>
+
+- post 요청
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:index')
+    else:
+        form = UserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+```
+- 여기까지만 하면 오류남
+- auth안에 있는 User가 아닌, accounts에 정의한 User로 바꿔줘야 함
+
+<br>
+
+---
+32. accounts의 User
+- forms 생성
+```python
+# accounts/forms.py
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+class CustomUserCreationForm(UserCreationForm):
+
+    class Meta:
+        model = User
+        fields = '__all__'
+```
+<br>
+
+- views 수정
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+# from django.contrib.auth.forms import UserCreationForm
+from .forms import CustomUserCreationForm
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:index')
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+```
+
+<br>
+
+---
+33. 보여주고 싶은 form만 보여주기
+- forms 수정
+```python
+# accounts/forms.py
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+class CustomUserCreationForm(UserCreationForm):
+
+    class Meta:
+        model = User
+        fields = ('username',)
+```
+- articles forms: `froms.ModelForm`을 직접 상속해서 만듬
+- accounts forms: `UsercreationForm`은 이미 만들어진 forms을 바탕으로 상속받아 커스텀하여 사용
+- models도 forms와 마찬가지
+- articles modles: `modles.Model`을 직접 상속해서 만듬
+- accounts models: `AbstractUser`은 django 내부에서 어느정도 만들어진 models을 상속해서 만듦
+
+<br>
+
+---
+34. admin 등록
+```python
+# accounts/admin.py
+from django.contrib import admin
+from .models import User
+
+# Register your models here.
+admin.site.register(User)
+```
