@@ -1582,7 +1582,7 @@ def update(request, pk):
 
 <br>
 
-1.  GET 요청
+41.  GET 요청
 - new 함수와 update 함수의 login 페이지로 부르는 것은 서로 url이 다름
 - updat와 같은 url로 하고 싶다면 GET 요청으로 바꿔야 한다
 - 기존 acoounts의 views.py
@@ -1694,4 +1694,150 @@ def new(request):
     return render(request, 'articles/form.html', context)
 ```
 # 로그아웃
-1.  
+42. logout
+- url 설정
+```python
+# accounts/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('<int:pk>/', views.detail, name='detail'),
+]
+```
+<br>
+
+- views 설정
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout # logout 함수랑 겹치기 때문에 logout 이름을 auth_logout으로 바꿔줌
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm
+
+def logout(request):
+    auth_logout(request)
+    return redirect('articles:index')
+```
+<br>
+
+- base 수정(logout url 삽입)
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
+    </head>
+    <body>
+        {% if request.user.is_authenticated %}
+            <span>{{ request.user }}</span>
+            <a href="{% url 'accounts:logout' %}">로그아웃</a>
+        {% else %}
+            <a href="{% url 'accounts:signup' %}">회원가입</a>
+            <a href="{% url 'accounts:login' %}">로그인</a>
+        
+        {% endif %}
+
+        <div class="container my-5">
+            {% block content %}
+            {% endblock %}
+        </div>
+{% bootstrap_javascript %}
+</body>
+</html>
+```
+
+43. 회원가입 후 자동로그인
+- accounts views 수정
+- 기존 signup views
+```python
+# accounts/veiws.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout # logout 함수랑 겹치기 때문에 logout 이름을 auth_logout으로 바꿔줌
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('articles:index')
+            # 회원가입 후 로그인 페이지로 가려면 return redirect('articles:index')말고 return redirect('articles:login') 해주면 됨
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+```
+<br>
+
+- 수정 후 sign views
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout # logout 함수랑 겹치기 때문에 logout 이름을 auth_logout으로 바꿔줌
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save() # ModelForm의 save 메서드의 리턴값은 해당 모델의 인스턴스
+            auth_login(request, user) # 로그인 함수 호출
+            return redirect('articles:index')
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+
+def detail(request, pk):
+    user = get_user_model().objects.get(pk=pk)
+    context = {
+        'user': user
+    }
+
+    return render(request, 'accounts/detail.html', context)
+
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            return redirect(request.GET.get('next') or 'articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+
+def logout(request):
+    auth_logout(request)
+    return redirect('articles:index')
+```
