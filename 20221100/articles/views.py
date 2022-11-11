@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Article
 from .forms import ArticleForm
 
@@ -10,6 +11,7 @@ def index(request):
     }
     return render(request, 'articles/index.html', context)
 
+@login_required 
 def new(request):
     if request.method == 'POST':
         article_form = ArticleForm(request.POST)
@@ -30,6 +32,9 @@ def detail(request, article_pk):
     }
     return render(request, 'articles/detail.html', context)
 
+
+from django.contrib.auth.decorators import login_required
+@ login_required
 def update(request, pk):
     article = Article.objects.get(pk=pk)
     if request.method == 'POST':

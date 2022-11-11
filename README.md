@@ -1398,3 +1398,300 @@ def login(request):
 </body>
 </html>
 ```
+<br>
+
+---
+38.  로그인 회원가입 버튼
+- base 수정
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
+    </head>
+    <body>
+        <p>{{ user }}</p>
+        <a href="{% url 'accounts:signup' %}">회원가입</a>
+        <a href="{% url 'accounts:login' %}">로그인</a>
+
+
+        <div class="container my-5">
+            {% block content %}
+            {% endblock %}
+        </div>
+{% bootstrap_javascript %}
+</body>
+</html>
+```
+<br>
+
+---
+39. 로그인 유무에 따른 회원가입 표시(분기 처리)
+- base 수정
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
+    </head>
+    <body>
+        {% comment %} request.user는 settings.py에 'django.contrib.auth.context_processors.auth', 때문에 user로 해도 괜찮다 {% endcomment %}
+        {% if request.user.is_authenticated %}
+            <span>{{ request.user }}</span>
+            <a href="">로그아웃</a>
+        {% else %}
+            <a href="{% url 'accounts:signup' %}">회원가입</a>
+            <a href="{% url 'accounts:login' %}">로그인</a>
+        
+        {% endif %}
+
+        <div class="container my-5">
+            {% block content %}
+            {% endblock %}
+        </div>
+{% bootstrap_javascript %}
+</body>
+</html>
+```
+<br>
+
+- index 수정
+```html
+<!-- articles/templates/articles/index.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<h1>게시판</h1>
+{% if request.user.is_authenticated %}
+    <a href="{% url 'articles:new' %}">글 작성</a>
+{% endif %}
+{% for article in articles %}
+<h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} {{ article.updated_at }}</p>
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
+```
+<br>
+
+40. url 글 작성(create) 막기
+- 백엔드로 막기(views)
+- 기존 articles/views.py의 new
+```python
+# articles/views.py
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 수정 후 views.py의 new
+```python
+# articles/views.py
+def new(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST)
+            if article_form.is_valid():
+                article_form.save()
+                return redirect('articles:index')
+        else:
+            article_form = ArticleForm()
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+    else:
+        # 페이지 자체를 만들어서 return render 하는 방법
+        # 혹은 로그인 페이지로 return redirect 하는 방법
+        return redirect('accounts:login')
+```
+<br>
+
+- 더 나은 방법 수정 전 views.py의 update
+```python
+# articles/views.py
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 수정 후 views.py의 update 
+```python
+# articles/views.py
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+- @ login_required: 실제 사용자가 로그인을 요구하는 상황에서 로그인 페이지로 보내주고, 이후에 행동을 view 함수(accounts/views.py에 login 함수)의 추가적인 처리로 해결
+
+
+<br>
+
+1.  GET 요청
+- new 함수와 update 함수의 login 페이지로 부르는 것은 서로 url이 다름
+- updat와 같은 url로 하고 싶다면 GET 요청으로 바꿔야 한다
+- 기존 acoounts의 views.py
+```python 
+# accounts/views.py
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            return redirect('articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+```
+<br>
+
+- 수정 후 account의 views.py
+```python
+# accounts/views.py
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            # request.GET.get('next') : articles/1/update
+            if request.GET.get('next'):
+                return redirect(request.GET.get('next'))
+            else:
+                return redirect('articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+```
+- 코드 줄이기
+```python
+# accounts/views.py
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            return redirect(request.GET.get('next') or 'articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+```
+<br>
+
+- create 함수(new 함수) 줄이기
+- if 문을 사용하지 않아도 되기 때문
+- 기존 new 함수
+```python
+# articles/views.py
+from django.shortcuts import render, redirect
+from .models import Article
+from .forms import ArticleForm
+
+def new(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST)
+            if article_form.is_valid():
+                article_form.save()
+                return redirect('articles:index')
+        else:
+            article_form = ArticleForm()
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+    else:
+        return redirect('accounts:login')
+```
+<br>
+
+- 수정 후 new 함수
+```python
+# articles/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Article
+from .forms import ArticleForm
+
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+# 로그아웃
+1.  

@@ -1,6 +1,4 @@
-<!-- {% load static %} -->
 {% load django_bootstrap5 %}
-{% bootstrap_css %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -8,11 +6,20 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Document</title>
-        <!-- <link rel="stylesheet" href="{/% static css/style.css /%}"> -->
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
     </head>
     <body>
-        <h1>{{ user }}</h1>
-        <div class="container">
+        {% if request.user.is_authenticated %}
+            <span>{{ request.user }}</span>
+            <a href="">로그아웃</a>
+        {% else %}
+            <a href="{% url 'accounts:signup' %}">회원가입</a>
+            <a href="{% url 'accounts:login' %}">로그인</a>
+        
+        {% endif %}
+
+        <div class="container my-5">
             {% block content %}
             {% endblock %}
         </div>

@@ -1,10 +1,17 @@
 {% extends 'base.html' %}
-{% block content %}
 {% load static %}
+{% load django_bootstrap5 %}
 
-<img src="{% static 'images/cowboy.png' %}" alt="">
-<a href="{% url 'articles:new' %}">글 작성</a>
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
 
+
+{% block content %}
+<h1>게시판</h1>
+{% if request.user.is_authenticated %}
+    <a href="{% url 'articles:new' %}">글 작성</a>
+{% endif %}
 {% for article in articles %}
 <h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
 <p>{{ article.content }}</p>
