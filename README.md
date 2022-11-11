@@ -1934,7 +1934,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 class CustomUserChangeForm(UserChangeForm):
 
-    class Mata:
+    class Meta:
         model = get_user_model()
         fields = '__all__'
 
@@ -1962,7 +1962,119 @@ class CustomUserCreationForm(UserCreationForm):
 
 class CustomUserChangeForm(UserChangeForm):
 
-    class Mata:
+    class Meta:
         model = get_user_model()
         fields = ('first_name', 'last_name', 'email')
+```
+
+<br>
+
+---
+45. 회원가입 내용 받기
+- view 수정(update)
+```python
+# accounts/views.py
+def update(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:detail')
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+```
+- 여기까지 하면 오류 남: `NoReverseMatch`
+- url 변수화 해놓은 것을 path로 변환하는 과정에서 매치되지 않음
+
+
+<br>
+
+- view 수정(request.user.pk)
+```python
+# accounts/views.py
+def update(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:detail', request.user.pk)
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+```
+- 로그인한 user의 pk값 넣어줌
+
+<br>
+
+- html 수정(기존 html)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+
+{% endblock %}
+```
+
+<br>
+
+- html 수정
+  - email, first_name 정보 입력
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.first_name }}</p>
+{% endblock %}
+```
+<br>
+
+---
+46. 이름 순서 바꾸기
+- model 수정
+- 기존 accounts models
+```python
+# accounts/models.py
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+class User(AbstractUser):
+    pass
+```
+
+<br>
+
+- 수정된 accounts models
+```python
+# accounts/models.py
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+class User(AbstractUser):
+    @property
+    def full_name(self):
+        return f'{self.last_name}{self.first_name}'
+```
+- 클래스의 값들을 조합해서 보여줄때 models에 정의하면 됨
+
+<br>
+
+- detail 페이지 수정(full_name)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+{% endblock %}
 ```

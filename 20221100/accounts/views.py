@@ -47,8 +47,13 @@ def logout(request):
     return redirect('articles:index')
 
 def update(request):
-    form = CustomUserChangeForm(instance=request.user)
-    
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:detail', request.user.pk)
+    else:
+        form = CustomUserChangeForm(instance=request.user)
     context = {
         'form': form
     }
