@@ -2078,3 +2078,37 @@ class User(AbstractUser):
 <p>{{ user.email }} | {{ user.full_name }}</p>
 {% endblock %}
 ```
+- 여기까지하면 로그인한 상태에서 update는 되지만, 로그아웃한 상태에서 update는 오류가 남(views.py)
+- 로그인을 해야 접속 가능하도록 `login_required` 해주면 됨
+
+<br>
+
+---
+47. logout 상태의 update
+- view 수정(login_required)
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
+
+@login_required
+def update(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:detail', request.user.pk)
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+```
+- `login_required`를 하면 `accounts/update`(프로필 수정 페이지)에 들어갈 수 없고, 로그인 페이지로 들어감
+- `login_required` 필요한 상황: 로그인이 필요할 때, `request.user`로 유저객체를 사용하는 `view 함수`에서는 되도록 사용(: 안할시 오류가 나기 때문)
