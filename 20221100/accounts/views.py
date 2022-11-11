@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout # logout 함수랑 겹치기 때문에 logout 이름을 auth_logout으로 바꿔줌
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 # Create your views here.
 def signup(request):
@@ -45,3 +45,11 @@ def login(request):
 def logout(request):
     auth_logout(request)
     return redirect('articles:index')
+
+def update(request):
+    form = CustomUserChangeForm(instance=request.user)
+    
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)

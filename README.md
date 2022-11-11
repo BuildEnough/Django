@@ -1579,10 +1579,10 @@ def update(request, pk):
 ```
 - @ login_required: 실제 사용자가 로그인을 요구하는 상황에서 로그인 페이지로 보내주고, 이후에 행동을 view 함수(accounts/views.py에 login 함수)의 추가적인 처리로 해결
 
-
 <br>
 
-41.  GET 요청
+---
+41.   GET 요청
 - new 함수와 update 함수의 login 페이지로 부르는 것은 서로 url이 다름
 - updat와 같은 url로 하고 싶다면 GET 요청으로 바꿔야 한다
 - 기존 acoounts의 views.py
@@ -1693,6 +1693,9 @@ def new(request):
     }
     return render(request, 'articles/form.html', context)
 ```
+<br>
+
+---
 # 로그아웃
 42. logout
 - url 설정
@@ -1760,7 +1763,9 @@ def logout(request):
 </body>
 </html>
 ```
+<br>
 
+---
 43. 회원가입 후 자동로그인
 - accounts views 수정
 - 기존 signup views
@@ -1840,4 +1845,124 @@ def login(request):
 def logout(request):
     auth_logout(request)
     return redirect('articles:index')
+```
+<br>
+
+---
+44. 회원가입 수정
+- url 수정(update)
+```python
+# accounts/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('update/', views.update, name='update'),
+    path('<int:pk>/', views.detail, name='detail'),
+]
+```
+<br>
+
+- views 수정(update, CustomUserChangeForm)
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout # logout 함수랑 겹치기 때문에 logout 이름을 auth_logout으로 바꿔줌
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
+
+def update(request):
+    form = CustomUserChangeForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+```
+- 여기까지 하면 수정이지만 실제론 비어있다 `form = CustomUserChangeForm()`를 수정해줘야함
+
+<br>
+
+- views 수정
+```python
+# accounts/views.py
+def update(request):
+    form = CustomUserChangeForm(instance=request.user)
+    # 기존 값을 로그인한 유저 instance=request.user
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+```
+
+<br>
+
+- html 생성
+```html
+<!-- accounts/templates/accounts/update.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>프로필 업데이트</h1>
+<form action="" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endblock %}
+```
+<br>
+
+- form 수정(UserChangeForm Custom)
+```python
+# accounts/forms.py
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+# from .models import User
+from django.contrib.auth import get_user_model
+
+class CustomUserCreationForm(UserCreationForm):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username',)
+
+class CustomUserChangeForm(UserChangeForm):
+
+    class Mata:
+        model = get_user_model()
+        fields = '__all__'
+
+# Article Create/Update: ArticleForm을 같이 사용했는데,
+# User Create/Update: Form을 다르게 사용하는가?
+
+# 사용자는 비밀번호가 다름
+# User Create: 비밀번호 2개를 받아서 일치하는 로직이 포함됨 => UserCreationForm
+# User Update: 비밀번호 2개를 받을 필요가 있나?, 구성 자체가 다른거 같음, 비밀번호는 그대로 입력해서 주면 됨?, 구성이 다를수도?
+```
+<br>
+
+- form 수정(fields)
+```python
+# accounts/forms.py
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+# from .models import User
+from django.contrib.auth import get_user_model
+
+class CustomUserCreationForm(UserCreationForm):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username',)
+
+class CustomUserChangeForm(UserChangeForm):
+
+    class Mata:
+        model = get_user_model()
+        fields = ('first_name', 'last_name', 'email')
 ```
