@@ -2119,12 +2119,39 @@ def update(request):
 ---
 # 이미지 저장
 48. Pillow 설치
+- pillow: 이미지 관리하기 위해 설치(python image 라이브러리)
 ```bash
 $ pip install Pillow
 ```
 <br>
 
 ```bash
-python3 -m pip install --upgrade pip
+$ python3 -m pip install --upgrade pip
 ```
 [pillow 문서](https://pillow.readthedocs.io/en/stable/installation.html)
+
+<br>
+
+---
+49. articles 설정
+- model 수정
+```python
+# articles/models.py
+from django.db import models
+
+# Create your models here.
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = models.ImageField(upload_to='images/', blank=True)
+    # blank=True: 이미지가 항상 업로드 되는건 아니기 떄문에 넣어줌
+```
+<br>
+
+```bash
+$ python manage.py makemigrations
+$ python manage.py migrate
+```
