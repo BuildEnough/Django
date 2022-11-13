@@ -2155,3 +2155,115 @@ class Article(models.Model):
 $ python manage.py makemigrations
 $ python manage.py migrate
 ```
+<br>
+
+- form 수정
+```python
+# articles/forms.py
+from django import forms
+from .models import Article
+
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = ['title', 'content', 'image']
+```
+- 게시글 저장 O, 하지만 image 받지 못하는 상황
+
+<br>
+
+- html 수정(enctype)
+```python
+# articles/templates/articles/form.html
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{% block content %}
+
+{% if request.resolver_match.url_name == 'new' %}
+<h1> 생성 </h1>
+{% else %}
+<h1> 수정 </h1>
+{% endif %}
+
+<form action="" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form article_form %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+    <input type="submit" value="수정">
+</form>
+{% endblock %}
+```
+
+<br>
+
+- html 삭제
+    - `create.html`: 더 이상 사용하지 않기 때문에 삭제해도됨
+
+<br>
+
+- view 수정(request.FILES)
+```python
+# articles/views.py
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+- `images`폴더에 image가 들어와 있음(즉, 이미지를 서버에 저장받을 수 있다)
+
+<br>
+
+- form으로 file 받을 때 2가지 설정
+  - html form 자체에서 file 받는 옵션
+  - view에서 file을 별도로 model form에 넣어서 줌
+
+<br>
+
+---
+49. image 보여주기
+- html 수정(article.image.url)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+<img src="{{ article.image.url }}" alt="{{ article.image }}">
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+- settings 설정
+```python
+# pjt/settings.py
+MIDEA_ROOT = BASE_DIR / 'images'
+MIDEA_URL = '/midia/'
+```
+
+- url 설정(settings, static)
+```python
+# pjt/urls.py
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('articles/', include('articles.urls')),
+    path('accounts/', include('accounts.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```

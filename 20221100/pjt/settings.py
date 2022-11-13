@@ -123,6 +123,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Media files(user uploaded filed)
+MIDEA_ROOT = BASE_DIR / 'images'
+MIDEA_URL = '/midia/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

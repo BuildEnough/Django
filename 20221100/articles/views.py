@@ -14,7 +14,7 @@ def index(request):
 @login_required 
 def new(request):
     if request.method == 'POST':
-        article_form = ArticleForm(request.POST)
+        article_form = ArticleForm(request.POST, request.FILES)
         if article_form.is_valid():
             article_form.save()
             return redirect('articles:index')
