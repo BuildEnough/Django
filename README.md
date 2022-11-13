@@ -2112,3 +2112,19 @@ def update(request):
 ```
 - `login_required`를 하면 `accounts/update`(프로필 수정 페이지)에 들어갈 수 없고, 로그인 페이지로 들어감
 - `login_required` 필요한 상황: 로그인이 필요할 때, `request.user`로 유저객체를 사용하는 `view 함수`에서는 되도록 사용(: 안할시 오류가 나기 때문)
+
+
+<br>
+
+---
+# 이미지 저장
+48. Pillow 설치
+```bash
+$ pip install Pillow
+```
+<br>
+
+```bash
+python3 -m pip install --upgrade pip
+```
+[pillow 문서](https://pillow.readthedocs.io/en/stable/installation.html)
