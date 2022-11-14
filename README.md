@@ -2240,7 +2240,7 @@ def new(request):
 <h1>{{ article.pk }}번</h1>
 <h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
 <p>{{ article.content }}</p>
-<img src="{{ article.image.url }}" alt="{{ article.image }}">
+<img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
 <a href="{% url 'articles:update' article.pk %}">글 수정</a>
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
@@ -2266,4 +2266,134 @@ urlpatterns = [
     path('articles/', include('articles.urls')),
     path('accounts/', include('accounts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+<br>
+
+---
+50. image resizing
+- django-imagekit
+```bash
+$ pip install django-imagekit
+```
+<br>
+
+- settings 설정
+```python
+# pjt/settings.py
+INSTALLED_APPS = [
+    'articles',
+    'accounts',
+    'django_bootstrap5',
+    'django_extensions',
+    'imagekit',
+    'django.contrib.admin', # 관리자
+    'django.contrib.auth', # 유저/인증
+    'django.contrib.contenttypes',
+    'django.contrib.sessions', # 세션 관리
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+```
+
+- model 설정(imagekit)
+- 기존 model
+```python
+# articles/models.py
+from django.db import models
+
+# Create your models here.
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = models.ImageField(upload_to='images/', blank=True)
+```
+<br>
+
+- 변경 후 model
+```python
+# articles/models.py
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
+from django.db import models
+
+# Create your models here.
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(400, 300)],
+                                format='JPEG',
+                                options={'quality': 80})
+```
+
+<br>
+
+---
+51. image 분기처리
+- html 수정
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+---
+52. 글 수정(image)
+- view 수정
+- 기존 views(update)
+```python
+# articles/views.py
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 변경 후 views(request.FILES)
+```python
+# articles/views.py
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
 ```
