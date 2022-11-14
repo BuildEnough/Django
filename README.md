@@ -2397,3 +2397,160 @@ def update(request, pk):
     }
     return render(request, 'articles/form.html', context)
 ```
+
+<br>
+
+---
+53. html 수정
+- base 수정(navbar)
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">Navbar</a>
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'articles:index' %}">Home</a>
+                  </li>
+                    {% if request.user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:detail' request.user.pk %}">{{ request.user }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:logout' %}">로그아웃</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:signup' %}">회원가입</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">로그인</a>
+                        </li>
+                    {% endif %}
+                </ul>
+              </div>
+            </div>
+          </nav>
+
+        <div class="container my-5">
+            {% block content %}
+            {% endblock %}
+        </div>
+{% bootstrap_javascript %}
+</body>
+</html>
+```
+- 이후 bootstrap 사용하여 꾸미기
+
+<br>
+
+---
+54. message
+- settings 설정
+```python
+# pjt/settings.py
+# message framework
+# https://docs.djangoproject.com/en/4.1/ref/contrib/messages/
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+```
+<br>
+
+- view 설정(messages)
+```python
+# articles/views.py
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Article
+from .forms import ArticleForm
+
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES)
+        if article_form.is_valid():
+            article_form.save()
+            messages.success(request, '글 작성 완료')
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            messages.success(request, '글 수정 완료')
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- base html 추가(message)
+```html
+<!-- templates/base.html -->
+          {% if messages %}
+            <ul class="messages">
+            {% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+```
+<br>
+
+- base html 수정
+```html
+<!-- templates/base.html -->
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+
+```
+
+<br>
+
+---
+55. Warning(message)
+- view 수정
+```python
+# accounts/views.py
+from django.contrib import messages
+
+def logout(request):
+    auth_logout(request)
+    messages.warning(request, '로그아웃!')
+    return redirect('articles:index')
+```
+

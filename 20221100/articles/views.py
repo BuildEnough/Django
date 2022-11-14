@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Article
 from .forms import ArticleForm
@@ -17,6 +18,7 @@ def new(request):
         article_form = ArticleForm(request.POST, request.FILES)
         if article_form.is_valid():
             article_form.save()
+            messages.success(request, '글 작성 완료')
             return redirect('articles:index')
     else:
         article_form = ArticleForm()
@@ -41,6 +43,7 @@ def update(request, pk):
         article_form = ArticleForm(request.POST, request.FILES, instance=article)
         if article_form.is_valid():
             article_form.save()
+            messages.success(request, '글 수정 완료')
             return redirect('articles:detail', article.pk)
     else:
         article_form = ArticleForm(instance=article)
