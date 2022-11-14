@@ -2666,3 +2666,97 @@ Comment.objects.filter(article_id=12) # 직접 참조
 article.comment_set.all() # 역참조
 # 두 개의 결과 같음
 ```
+
+<br>
+
+---
+57. Comment 목록
+- html 수정(for문 활용 comment)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<hr>
+{% for comment in article.comment_set.all %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- for문에 `()`가 빠져있는게 아닌
+
+<br>
+
+- 동일한 코드를 만들어보면(`'comment': article.comment_set.all(),`)
+- view에서 변수 넘기기
+```python
+# articles/views.py
+def detail(request, article_pk):
+    article = Article.objects.get(pk=article_pk)
+    context = {
+        'article': article,
+        'comments': article.comment_set.all(),
+    }
+    return render(request, 'articles/detail.html', context)
+```
+- `article.comment_set.all` => `comments`
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- comment 없을 때(empty)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
