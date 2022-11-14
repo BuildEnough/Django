@@ -2760,3 +2760,168 @@ def detail(request, article_pk):
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
 ```
+
+<br>
+
+---
+58. comment form
+- form 설정(Comment)
+```python
+# articles/forms.py
+from django import forms
+from .models import Article, Comment
+
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = ['title', 'content', 'image']
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+# comment form을 넘겨주는 곳은 따로 존재하는 것이 아닌 articles/views.py의 detail 함수
+```
+<br>
+
+- view 설정(Comment)
+```python
+# articles/views.py
+from .forms import ArticleForm, CommentForm
+
+def detail(request, article_pk):
+    article = Article.objects.get(pk=article_pk)
+    comment_form = CommentForm()
+    context = {
+        'article': article,
+        'comments': article.comment_set.all(),
+        'comment_form': comment_form,
+    }
+    return render(request, 'articles/detail.html', context)
+```
+<br>
+
+- html 수정(bootstrap, comment_form)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<form action="">
+    {% bootstrap_form comment_form layout='inline' %}
+    <!--layout='inline': 라벨 사라짐 -->
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+---
+59. comment 처리
+- url 설정
+```python
+# articles/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'articles'
+
+urlpatterns = [
+    path('index/', views.index, name='index'),
+    path('new/', views.new, name='new'),
+    path('<int:article_pk>/detail/', views.detail, name='detail'),
+    path('<int:pk>/update/', views.update, name='update'),
+    path('<int:pk>/delete/', views.delete, name='delete'),
+    path('<int:pk>/comments/', views.comment_create, name='comment_create'),
+]
+```
+<br>
+
+- view 설정
+```python
+# articles/views.py
+def comment_create(request, pk):
+    article = Article.objects.get(pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment_form.save()
+    return redirect('articles:detail', article.pk)
+```
+<br>
+
+- html 수정(`<form action="{% url 'articles:comment_create' article.pk %}" method="POST">`, `csrf_token`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- NOT NULL 제약조건 때문에 오류남
+
+<br>
+
+- view 수정
+```python
+# articles/views.py
+def comment_create(request, pk):
+    article = Article.objects.get(pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment = comment_form.save(commit=False)
+        # save하기 전 commit=False로 멈춤
+
+        comment.article = article
+        comment.save()
+        # return한 객체를 조작해서 저장
+    return redirect('articles:detail', article.pk)
+```
+- DB에 직접 저장하지말고 객체를 주면 넣을 값들 넣고 저장(save) 호출
+- `comment_form`: CommentForm의 instance(모델폼 인스턴스)
+- `comment`: Comment 클래스의 instance
+- 모델폼의 save 메서드는 return 값이 해당 모델의 인스턴스이다
