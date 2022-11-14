@@ -2554,3 +2554,115 @@ def logout(request):
     return redirect('articles:index')
 ```
 
+<br>
+
+---
+# COMMENT
+56. Comment
+- model 설정
+```python
+# articles/models.py
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+from django.db import models
+
+# Create your models here.
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(1200, 960)],
+                                format='JPEG',
+                                options={'quality': 80})
+
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+```
+- 혹은(`Article` 문자열로 대체 가능[순서 때문])
+```python
+# articles/models.py
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+from django.db import models
+
+# Create your models here.
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey('Article', on_delete=models.CASCADE)
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(1200, 960)],
+                                format='JPEG',
+                                options={'quality': 80})
+```
+<br>
+
+- admin 설정(comment)
+```python
+# articles/admin.py
+from django.contrib import admin
+from .models import Article, Comment
+
+# Register your models here.
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_at', 'updated_at')
+
+admin.site.register(Article, ArticleAdmin)
+admin.site.register(Comment)
+```
+<br>
+
+- 댓글 정보 포함
+```python
+# articles/admin.py
+from django.contrib import admin
+from .models import Article, Comment
+
+# Register your models here.
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_at', 'updated_at')
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('content', 'created_at', 'article')
+
+admin.site.register(Article, ArticleAdmin)
+admin.site.register(Comment, CommentAdmin)
+```
+<br>
+
+- 확인
+```bash
+$ python manage.py shell_plus
+Article.objects.all()
+Article.objects.create(title='제목1', content='내용1')
+article = Article.objects.create(title='제목1', content='내용1')
+article
+
+# 게시글 12번에 내용이 111인 댓글을 생성하는 코드 작성
+comment = Comment.objects.create(content='111', article=article)
+comment
+
+comment.article
+# <Article: Article object (12)>
+
+comment.article.id
+# 12
+
+comment = Comment.objects.create(content='111', article_id=12)
+# 필드 값만 기억해주면 위처럼 입력해도 상관없다
+
+# 12번 게시글의 모든 댓글을 알고 싶을 때
+Comment.objects.filter(article_id=12) # 직접 참조
+article.comment_set.all() # 역참조
+# 두 개의 결과 같음
+```
