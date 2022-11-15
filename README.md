@@ -2925,3 +2925,52 @@ def comment_create(request, pk):
 - `comment_form`: CommentForm의 instance(모델폼 인스턴스)
 - `comment`: Comment 클래스의 instance
 - 모델폼의 save 메서드는 return 값이 해당 모델의 인스턴스이다
+
+<br>
+
+---
+# 1:1 - 1:N - N:M
+60. user class 가져오기
+- model 설정(settings, user)
+```python
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
+from django.db import models
+
+# Create your models here.
+from django.conf import settings
+# settings 가져옴
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(1200, 960)],
+                                format='JPEG',
+                                options={'quality': 80})
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # 위의 1줄: get user 모델 사용하는 것과 차이 없음
+
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+```
+<br>
+
+- `$ python manage.py makemigrations`
+```terminal
+You are trying to add a non-nullable field 'user' to article without a default; we can't do that (the database needs something to populate existing rows).
+Please select a fix:
+ 1) Provide a one-off default now (will be set on all existing rows with a null value for this column)
+ 2) Quit, and let me add a default in models.py
+```
+- 1번 선택(1 입력) => 3번 유저 입력(3 입력)
+
+<br>
+
+- `$ python manage.py migrate`
+
