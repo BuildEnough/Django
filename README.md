@@ -3226,7 +3226,7 @@ def new(request):
 ```
 <br>
 
-- html 수정(`url 'accounts:detail' article.user.id`)
+- html 수정(`url 'accounts:detail' article.user.id``)
 ```html
 <!-- accounts/templates/accounts/index.html -->
 {% extends 'base.html' %}
@@ -3255,4 +3255,155 @@ def new(request):
 <a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
 {% endfor %}
 {% endblock %}
+```
+
+<br>
+
+---
+63. 본인 글만 수정하기
+- html 수정(`request.user == article.user`)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- 여기까지해도 url 검색시 들어올 수 있음
+- view에서 막아줘야 함
+
+<br>
+
+- view 수정
+- 기존 update 함수
+```python
+# articles/views.py
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES, instance=article)
+        if article_form.is_valid():
+            article_form.save()
+            messages.success(request, '글 수정 완료')
+            return redirect('articles:detail', article.pk)
+    else:
+        article_form = ArticleForm(instance=article)
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 수정 후 update 함수(`request.user == article.user`)
+```python
+# article/views.py
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.user == article.user:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST, request.FILES, instance=article)
+            if article_form.is_valid():
+                article_form.save()
+                messages.success(request, '글 수정 완료')
+                return redirect('articles:detail', article.pk)
+        else:
+            article_form = ArticleForm(instance=article)
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 수정 후 update 함수(`HttpResponseForbidden`)
+- url로 다른 유저 update 들어갈 경우 view에서 막는 방법 1
+```python
+# article/views.py
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.user == article.user:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST, request.FILES, instance=article)
+            if article_form.is_valid():
+                article_form.save()
+                messages.success(request, '글 수정 완료')
+                return redirect('articles:detail', article.pk)
+        else:
+            article_form = ArticleForm(instance=article)
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+    else:
+        # 작성자 아닐때
+        # 1. error message
+        # 403 메시지
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+```
+<br>
+
+- 수정 후 update 함수(`redirect`, `message`)
+- url로 다른 유저 update 들어갈 경우 view에서 막는 방법 2
+```python
+# article/views.py
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    article = Article.objects.get(pk=pk)
+    if request.user == article.user:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST, request.FILES, instance=article)
+            if article_form.is_valid():
+                article_form.save()
+                messages.success(request, '글 수정 완료')
+                return redirect('articles:detail', article.pk)
+        else:
+            article_form = ArticleForm(instance=article)
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+    else:
+        # 2. flash message 사용
+        messages.warning(request, '작성자만 작성 가능!')
+        return redirect('articles:detail', article.pk)
 ```

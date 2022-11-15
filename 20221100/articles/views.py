@@ -45,18 +45,22 @@ from django.contrib.auth.decorators import login_required
 @ login_required
 def update(request, pk):
     article = Article.objects.get(pk=pk)
-    if request.method == 'POST':
-        article_form = ArticleForm(request.POST, request.FILES, instance=article)
-        if article_form.is_valid():
-            article_form.save()
-            messages.success(request, '글 수정 완료')
-            return redirect('articles:detail', article.pk)
+    if request.user == article.user:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST, request.FILES, instance=article)
+            if article_form.is_valid():
+                article_form.save()
+                messages.success(request, '글 수정 완료')
+                return redirect('articles:detail', article.pk)
+        else:
+            article_form = ArticleForm(instance=article)
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
     else:
-        article_form = ArticleForm(instance=article)
-    context = {
-        'article_form': article_form
-    }
-    return render(request, 'articles/form.html', context)
+        messages.warning(request, '작성자만 작성 가능!')
+        return redirect('articles:detail', article.pk)
 
 def delete(request, pk):
     article = Article.objects.get(pk=pk)
