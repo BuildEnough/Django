@@ -2973,4 +2973,172 @@ Please select a fix:
 <br>
 
 - `$ python manage.py migrate`
+- 여기까지하고 글 작성시 오류남(`NOT NULL constraint failed: articles_article.user_id
+`)
+- user_id에 NULL 값이 있을 수 없기 때문
+- db.splite3: `articles_article`: 테이블 이름 | `user_id`: 필드 이름
 
+<br>
+
+---
+1.  1:N
+- model 수정
+- 기존 model
+```python
+# articles/forms.py
+from django import forms
+from .models import Article, Comment
+
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = ['title', 'content', 'image']
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+```
+<br>
+
+- 수정 후 model(ArticleForm)
+```python
+# articles/forms.py
+from django import forms
+from .models import Article, Comment
+
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = '__all__'
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+```
+- 글쓰기에서 user 선택 가능
+- 하지만 User 선택하는건 안됨(`__all__`이 좋은게 아님)
+- 코드 변경해줘야함(`articles/views.py`에 `create 함수`)
+
+<br>
+
+- view 수정
+- 기존 view
+```python
+# articles/views.py
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES)
+        if article_form.is_valid():
+            article_form.save()
+            messages.success(request, '글 작성 완료')
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+<br>
+
+- 수정 후 views(commit=False)
+```python
+# articles/views.py
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES)
+        if article_form.is_valid():
+            article = article_form.save(commit=False)
+            # 로그인한 유저 => 작성자임
+            article.user = request.user
+            article.save()
+            messages.success(request, '글 작성 완료')
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+```
+### User 정보 어떻게 넣을까?
+- views.py 함수 정의된 곳에서, 내가 사용자로부터(요청) 받을 수 있는 정보:
+- request.POST / request.GET / URL(variable routing)
+
+<br>
+
+- 사용자는 어떻게 요청으로 서버에 값을 전달?:
+- request => Form(Form에서 값 입력해줘)
+- URL => 내가 선택한 길(게시글 보기: 버톤 선택시 URL 값 넣어놔둠)
+
+<br>
+
+- html 수정(article.user)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h1>{{ article.pk }}번</h1>
+
+<h3>{{ article.user }}</h3>
+
+<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- html 수정(article.user.username)
+```html
+<!-- articles/templates/articles/index.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<h1>게시판</h1>
+{% if request.user.is_authenticated %}
+    <a class="btn btn-primary my-3" href="{% url 'articles:new' %}">글 작성</a>
+{% endif %}
+{% for article in articles %}
+<h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} {{ article.updated_at }}</p>
+
+<p>{{ article.user.username }}</p>
+
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
+```

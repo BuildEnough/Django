@@ -17,7 +17,10 @@ def new(request):
     if request.method == 'POST':
         article_form = ArticleForm(request.POST, request.FILES)
         if article_form.is_valid():
-            article_form.save()
+            article = article_form.save(commit=False)
+            # 로그인한 유저 => 작성자임
+            article.user = request.user
+            article.save()
             messages.success(request, '글 작성 완료')
             return redirect('articles:index')
     else:

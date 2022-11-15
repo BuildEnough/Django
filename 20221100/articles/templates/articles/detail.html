@@ -2,6 +2,7 @@
 {% load django_bootstrap5 %}
 {% block content %}
 <h1>{{ article.pk }}번</h1>
+<h3>{{ article.user }}</h3>
 <h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
 <p>{{ article.content }}</p>
 {% if article.image %}
