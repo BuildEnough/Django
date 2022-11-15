@@ -3439,3 +3439,144 @@ Please select a fix:
 ```bash
 $ python3 manage.py migrate
 ```
+- 댓글 입력시 `NOT NULL constraint failed: articles_comment.user_id` 오류 남
+- `comment` 모델은 `user_id`필드가 생겨있기 때문
+
+<br>
+
+- view 수정(`comment.user = request.user`)
+- 로그인이 필요함
+```python
+# articles/views.py
+@login_required
+# POST 요청으로 보내서 url로 접속할 방법이 없지만, 그러지 않고 POST요청으로 보낼 수 있기 때문에 login_required 넣어줌
+def comment_create(request, pk):
+    article = Article.objects.get(pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment = comment_form.save(commit=False)
+        comment.article = article
+
+        comment.user = request.user
+
+        comment.save()
+    return redirect('articles:detail', article.pk)
+```
+<br>
+
+- html 수정(`comment.user.username`, `request.user.is_authenticated`)
+- 누가 작성한 댓글인지 확인, 로그인한 유저만 댓글작성 가능
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+
+<hr>
+{% for comment in comments %}
+
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- html 수정
+- user.profile 페이지 반반 나눠 표현
+- 기존 html
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+
+<h3>작성한 글</h3>
+<p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+{% for article in user.article_set.all %}
+<p>
+    {{ forloop.counter }}
+    <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+</p>
+{% endfor %}
+
+{% endblock %}
+```
+<br>
+
+- 수정 후 html
+- 프로필 페이지에 유저가 작성한 글과 댓글 표시
+- 댓글 클릭시 해당 글로 이동(`articles:detail' comment.article.id`, `articles:detail' comment.article.pk` 둘 다 가능)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+<div class="row">
+    <div class="col-6">
+        <h3>작성한 글</h3>
+        <p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+        {% for article in user.article_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+
+    <div class="col-6">
+        <h3>작성한 댓글</h3>
+        <p class="text-muted">{{ user.comment_set.count }}개 작성 완료</p>
+        {% for comment in user.comment_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' comment.article.id %}">{{ comment.content }}</a>
+            {% comment %} <a href="{% url 'articles:detail' comment.article.pk %}">{{ comment.content }}</a> {% endcomment %}
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+```
+<br>
+
+64. user가 작성한 글 중 첫번쨰 글의 댓글에서 첫번쨰 user?
+- `user.article_set_all()`: article로 이뤄진 QuerySet
+- `user.article_set_all()[0]`: article 인스턴스
+- `user.article_set_all()[0].comment_set.all()`: article 인스턴스의 댓글들(comment로 이뤄진 QuerySet)
+- `user.article_set_all()[0].comment_set.all()[0]`: article 인스턴스의 댓글들 중에서 첫번째
+- `user.article_set_all()[0].comment_set.all()[0].user`: article 인스턴스의 댓글들 중에서 첫번째 댓글의 유저
