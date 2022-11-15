@@ -16,8 +16,8 @@
 <h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
 <p>{{ article.content }}</p>
 <p>{{ article.created_at }} {{ article.updated_at }}</p>
+<p class="text-muted"><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></p>
 
-<p class="text-muted">{{ article.user.username }}</p>
 
 <a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
 {% endfor %}

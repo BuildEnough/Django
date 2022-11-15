@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 {% block content %}
-<h1>{{ article.pk }}번</h1>
-<h3>{{ article.user }}</h3>
-<h2>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</h2>
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
 <p>{{ article.content }}</p>
 {% if article.image %}
     <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">

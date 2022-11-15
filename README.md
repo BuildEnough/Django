@@ -2981,7 +2981,7 @@ Please select a fix:
 <br>
 
 ---
-1.  1:N
+61.  1:N
 - model 수정
 - 기존 model
 ```python
@@ -3114,7 +3114,7 @@ def new(request):
 ```
 <br>
 
-- html 수정(article.user.username)
+- html 수정(`article.user.username`)
 ```html
 <!-- articles/templates/articles/index.html -->
 {% extends 'base.html' %}
@@ -3137,6 +3137,120 @@ def new(request):
 <p>{{ article.created_at }} {{ article.updated_at }}</p>
 
 <p>{{ article.user.username }}</p>
+
+<a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
+{% endfor %}
+{% endblock %}
+```
+
+<br>
+
+---
+62. User가 작성한 글 확인
+- html 수정(`user.article_set.all`)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+
+<h3>작성한 글</h3>
+{% for article in user.article_set.all %}
+<a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+{% endfor %}
+
+{% endblock %}
+```
+<br>
+
+- html 수정(`article.user.id`, `article.user.username`)
+- detail 페이지에서 유저 이름 선택시 해당 유저 페이지로 가기
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+<a href="{% url 'articles:update' article.pk %}">글 수정</a>
+
+<h4 class="my-3">댓글</h4>
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- html 수정
+- 유저가 작성한 글(몇번째 글인지) 순서대로 보여주기(`forloop.counter`)
+- 총 몇개의 글이 작성되었는지(`user.article_set.count`)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+
+<h3>작성한 글</h3>
+<p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+{% for article in user.article_set.all %}
+<p>
+    {{ forloop.counter }}
+    <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+</p>
+{% endfor %}
+
+{% endblock %}
+```
+<br>
+
+- html 수정(`url 'accounts:detail' article.user.id`)
+```html
+<!-- accounts/templates/accounts/index.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<h1>게시판</h1>
+{% if request.user.is_authenticated %}
+    <a class="btn btn-primary my-3" href="{% url 'articles:new' %}">글 작성</a>
+{% endif %}
+{% for article in articles %}
+<h3><a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a></h3>
+<p>{{ article.content }}</p>
+<p>{{ article.created_at }} {{ article.updated_at }}</p>
+
+{% comment %} <p class="text-muted">{{ article.user.username }}</p> {% endcomment %}
+<p class="text-muted"><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></p>
+
 
 <a href="{% url 'articles:delete' article.pk %}">글 삭제</a>
 {% endfor %}
