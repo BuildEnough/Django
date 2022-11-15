@@ -3580,3 +3580,57 @@ def comment_create(request, pk):
 - `user.article_set_all()[0].comment_set.all()`: article 인스턴스의 댓글들(comment로 이뤄진 QuerySet)
 - `user.article_set_all()[0].comment_set.all()[0]`: article 인스턴스의 댓글들 중에서 첫번째
 - `user.article_set_all()[0].comment_set.all()[0].user`: article 인스턴스의 댓글들 중에서 첫번째 댓글의 유저
+
+<br>
+
+# 중간정리
+- 참조, 역참조
+```python
+# articles.models.py
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(1200, 960)],
+                                format='JPEG',
+                                options={'quality': 80})
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+```
+- user.article.set은 존재함
+- article.user.set은 존재하지 않는다: user에 정의된 것이 없다
+
+<br>
+
+- `request.user`
+    - (로그인시) User 객체 (로그인 한 사람)
+      - article.user # User 객체 (게시글 작성한 사람)
+      - comment.user # User 객체 (댓글 작성한 사람)
+      - User.objects.get(pk=1) # User 객체 (pk가 1인 사람)
+      - User.objects.all()[0] # User 객체 (User들 중에 첫번째 있는 사람)
+    - (비로그인시) AnomynousUser 객체
+
+<br>
+
+- `article.id` vs `article.pk`
+  - id == pk
+
+<br>
+
+- `request.user` vs `article.user` 같은 객체?
+  - 모두 User 클래스의 인스턴스는 맞음
+  - A로 로그인하여 B의 게시글을 보면
+  - `request.user`: A
+  - `article.user`: B
+  - 하지만 A로 로그인하여 A의 게시글을 보면
+  - `request.user`: A
+  - `article.user`: A
+  - 그래서 삭제 버튼/수정 버튼을 조건문을 사용해 표시여부 나눔(둘 다 같은 User 객체이기 때문)
