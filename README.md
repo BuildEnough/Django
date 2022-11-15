@@ -3407,3 +3407,35 @@ def update(request, pk):
         messages.warning(request, '작성자만 작성 가능!')
         return redirect('articles:detail', article.pk)
 ```
+
+<br>
+
+---
+# comment user
+63. comment user
+- model 수정(`user`)
+```python
+# articles/models.py
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # user: settings.AUTH_USER_MODEL에 정의된 accounts 앱의 user라는 class 의미함
+    # 문자열로 들어갈 수 있음: 문자열을 settings에서 가져옴
+    # comment는 user을 직접참조
+    # user는 comment를 역참조: user.comment_set.all()
+```
+<br>
+
+```bash
+$ python3 manage.py makemigrations
+```
+- You are trying to add a non-nullable field 'user' to comment without a default; we can't do that (the database needs something to populate existing rows).
+Please select a fix:
+ 1) Provide a one-off default now (will be set on all existing rows with a null value for this column)
+ 2) Quit, and let me add a default in models.py
+- 1 입력 => 3 입력(3번 유저로)
+```bash
+$ python3 manage.py migrate
+```
