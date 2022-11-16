@@ -3634,3 +3634,62 @@ class Comment(models.Model):
   - `request.user`: A
   - `article.user`: A
   - 그래서 삭제 버튼/수정 버튼을 조건문을 사용해 표시여부 나눔(둘 다 같은 User 객체이기 때문)
+ 
+<br>
+
+---
+65. N:M
+- 좋아요(Like)
+  - Article: 0명 이상의 User에게 좋아요 받음
+  - User: 0개 이상의 글에 좋아요 누를 수 있음
+- 로직
+  - 상세보기 페이지: 좋아요 링크(`/articles/<pk>/like/`) 선택 => 좋아요 DB 추가 => redirect 상세보기 페이지
+  - user 정보는 request.user에서 가져다가 사용할 예정
+
+<br>
+
+- model 설정(`like_users`)
+```python
+# articles/models.py
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
+from django.db import models
+
+# Create your models here.
+from django.conf import settings
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=20)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = ProcessedImageField(upload_to='images/', blank=True,
+                                processors=[ResizeToFill(1200, 960)],
+                                format='JPEG',
+                                options={'quality': 80})
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    like_users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='like_articles')
+
+
+class Comment(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+```
+- `python manage.py makemigrations` => - `python manage.py migrate`
+
+<br>
+
+```terminal
+$ python3 manage.py shell_plus
+```
+- `a1 = Article.objects.all()[0]`
+- `a1` => <Article: Article object (10)>
+- `u1 = User.objects.all()[0]`
+- `a1.like_users.add(u1)`
+- `a1.like_users.all()` =>  <QuerySet [<User: admin>]>
+- `u1.like_articles.all()` => <QuerySet [<Article: Article object (10)>]>
+```
