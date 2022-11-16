@@ -3638,7 +3638,8 @@ class Comment(models.Model):
 <br>
 
 ---
-65. N:M
+# N:M
+65. 좋아요(LIKE)
 - 좋아요(Like)
   - Article: 0명 이상의 User에게 좋아요 받음
   - User: 0개 이상의 글에 좋아요 누를 수 있음
@@ -3679,7 +3680,7 @@ class Comment(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 ```
-- `python manage.py makemigrations` => - `python manage.py migrate`
+- `python manage.py makemigrations` => `python manage.py migrate`
 
 <br>
 
@@ -3689,7 +3690,453 @@ $ python3 manage.py shell_plus
 - `a1 = Article.objects.all()[0]`
 - `a1` => <Article: Article object (10)>
 - `u1 = User.objects.all()[0]`
-- `a1.like_users.add(u1)`
+- `a1.like_users.add(u1)`: 좋아요 추가 코드(article 객체에 like_users.add에 user 정보)
 - `a1.like_users.all()` =>  <QuerySet [<User: admin>]>
 - `u1.like_articles.all()` => <QuerySet [<Article: Article object (10)>]>
+
+<br>
+
+- url 설정(`like`)
+```python
+# articles/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'articles'
+
+urlpatterns = [
+    path('index/', views.index, name='index'),
+    path('new/', views.new, name='new'),
+    path('<int:article_pk>/detail/', views.detail, name='detail'),
+    path('<int:pk>/update/', views.update, name='update'),
+    path('<int:pk>/delete/', views.delete, name='delete'),
+    path('<int:pk>/comments/', views.comment_create, name='comment_create'),
+    path('<int:pk>/like/', views.like, name='like'),
+]
+```
+<br>
+
+- view 설정
+```python
+# articles/views.py
+def like(request, pk):
+    # 좋아요 추가
+    
+    # 상세 페이지로 redirect
+    return redirect('articles:detail', pk)
+```
+
+<br>
+
+- html 수정(`좋아요`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+<a href="{% url 'articles:like' article.pk %}">좋아요</a>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- views 수정
+```python
+# articles/views.py
+def like(request, pk):
+    article = Article.objects.get(pk=pk)
+    # 좋아요 추가
+    article.like_users.add(request.user)
+    # `a1.like_users.add(u1)`: 좋아요 추가 코드(article 객체에 like_users.add에 user 정보)랑 같은 맥락
+
+    # 상세 페이지로 redirect
+    return redirect('articles:detail', pk)
+```
+- DB 값 추가됨
+- 좋아요 기능은 되지만 좋아요 개수가 표현되지 않음(좋아요를 눌렀는지 안눌렀는지 모름)
+
+<br>
+
+- html 수정(`article.like_users.count`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+<a href="{% url 'articles:like' article.pk %}">좋아요 | <span>{{ article.like_users.count }}</span></a>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+---
+66. 좋아요 확인(분기, 로그인된 유저만 사용가능)
+- view 수정(`if`, `remove`, `login_required`)
+```python
+# articles/views.py
+@login_required
+def like(request, pk):
+    article = Article.objects.get(pk=pk)
+    # 만약 로그인한 유저가 이 글을 좋아요 눌렀다면,
+    if request.user in article.like_users.all():
+        # 좋아요 삭제
+        article.like_users.remove(request.user)
+
+    else:
+        # 좋아요 추가
+        article.like_users.add(request.user)
+
+    return redirect('articles:detail', pk)
+```
+- 전체 쿼리셋에서 확인하는 쿼리 메서드를 사용
+- 다른 쿼리 메서드 사용할 수 있음(`filter`)
+- `if article.like_users.filter(id=request.user.id).exists()`
+- `id`가 `request` => `user` => `id`가 존재(`exists`)하는지
+- `exists` 메서드: 모든 `article.like_users.all()`을 다 가져올 필요없음, 있는지 아닌지만 확인가능
+
+<br>
+
+- `get` vs `filter`
+- get: 한 개 있으면 해당 객체 줌, 없으면 오류, 많아도 오류
+- get 사용시기: 하나의 객체를 가져올 때 사용, get은 가지고 오더라도 그 객체
+- filter: 개수에 상관없이 쿼리셋 => `exists` `get` 뒤에 사용 못함
+
+<br>
+
+- html 수정(`if request.user in article.like_users.all`)
+- detail 화면에서 `좋아요` 선택시 좋아요 확인/취소 가능
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+<a href="{% url 'articles:like' article.pk %}">
+{% if request.user in article.like_users.all %}
+    좋아요 취소
+{% else %}
+    좋아요
+{% endif%}
+</a> | <span>{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+---
+67.  좋아요 꾸미기(icon)
+- bootstrap CDN
+- html 수정(`CDN`, `load static`, `<link rel="stylesheet" href="{% static 'css/style.css' %}">`: css 추가)
+```html
+<!-- templates/base.html -->
+{% load django_bootstrap5 %}
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+
+        {% bootstrap_css %}
+        {% block css %}{% endblock css %}
+
+        <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    </head>
+    <body>
+        ...생략
+    </body>
+</html>
+```
+<br>
+
+- html 수정(`좋아요 텍스트` 대신 `icon heart`, `request.user.is_authenticated`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+{% if request.user.is_authenticated %}
+    <a class="like-heart" href="{% url 'articles:like' article.pk %}">
+    {% if request.user in article.like_users.all %}
+        <i class="bi bi-heart-fill"></i>
+    {% else %}
+        <i class="bi bi-heart"></i> 
+    {% endif%}</a>{{ article.like_users.count }}</span>
+{% endif %}
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+
+<br>
+
+---
+68. 유저가 좋아요 누른 글 확인
+- html 수정
+- 기존 accounts/detail 페이지
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+<div class="row">
+    <div class="col-6">
+        <h3>작성한 글</h3>
+        <p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+        {% for article in user.article_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+
+    <div class="col-6">
+        <h3>작성한 댓글</h3>
+        <p class="text-muted">{{ user.comment_set.count }}개 작성 완료</p>
+        {% for comment in user.comment_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' comment.article.id %}">{{ comment.content }}</a>
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+```
+<br>
+
+- 수정 후 accounts/detail 페이지(`like_articles`)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+<div class="row">
+    <div class="col-6">
+        <h3>작성한 글</h3>
+        <p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+        {% for article in user.article_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+
+    <div class="col-6">
+        <h3>좋아요 누른 글</h3>
+        <p class="text-muted">{{ user.like_articles.count }}개 작성 완료</p>
+        {% for article in user.like_articles.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+```
+<br>
+
+- 글로 들어갔을 경우 좋아요 개수 안보임(`article.like_users.count` if 문 뒤로 빼줌)
+- html 수정(`article.like_users.count`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+<span>
+{% if request.user.is_authenticated %}
+    <a class="like-heart" href="{% url 'articles:like' article.pk %}">
+    {% if request.user in article.like_users.all %}
+        <i class="bi bi-heart-fill"></i>
+    {% else %}
+        <i class="bi bi-heart"></i> 
+    {% endif%}</a>
+{% endif %}
+{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
 ```

@@ -15,13 +15,12 @@
     </div>
 
     <div class="col-6">
-        <h3>작성한 댓글</h3>
-        <p class="text-muted">{{ user.comment_set.count }}개 작성 완료</p>
-        {% for comment in user.comment_set.all %}
+        <h3>좋아요 누른 글</h3>
+        <p class="text-muted">{{ user.like_articles.count }}개 작성 완료</p>
+        {% for article in user.like_articles.all %}
         <p>
             {{ forloop.counter }}
-            <a href="{% url 'articles:detail' comment.article.id %}">{{ comment.content }}</a>
-            {% comment %} <a href="{% url 'articles:detail' comment.article.pk %}">{{ comment.content }}</a> {% endcomment %}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
         </p>
         {% endfor %}
     </div>
