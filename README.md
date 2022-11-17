@@ -4140,3 +4140,28 @@ def like(request, pk):
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
 ```
+
+<br>
+
+---
+# 팔로우
+69. 팔로우: user와 user와의 관계
+- model 수정(`follwings`)
+```python
+# accounts/models.py
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+class User(AbstractUser):
+    follwings = models.ManyToManyField('self', symmetrical=False, related_name='followers')
+
+    @property
+    def full_name(self):
+        return f'{self.last_name}{self.first_name}'
+```
+- `python manage.py makemigrations`
+- `python manage.py migrate`
+
+<br>
+
