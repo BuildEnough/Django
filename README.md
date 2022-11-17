@@ -4146,7 +4146,7 @@ def like(request, pk):
 ---
 # 팔로우
 69. 팔로우: user와 user와의 관계
-- model 수정(`follwings`)
+- model 설정(`followings`)
 ```python
 # accounts/models.py
 from django.db import models
@@ -4154,7 +4154,7 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class User(AbstractUser):
-    follwings = models.ManyToManyField('self', symmetrical=False, related_name='followers')
+    followings = models.ManyToManyField('self', symmetrical=False, related_name='followers')
 
     @property
     def full_name(self):
@@ -4165,3 +4165,206 @@ class User(AbstractUser):
 
 <br>
 
+- url 설정(`follow`)
+```python
+# accounts/urls.py
+from django.urls import path
+from . import views
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('signup/', views.signup, name='signup'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('update/', views.update, name='update'),
+    path('<int:pk>/', views.detail, name='detail'),
+    path('<int:pk>/follow/', views.follow, name='follow'),
+]
+```
+<br>
+
+- view 설정(`follow`)
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
+
+# Create your views here.
+def signup(request):
+    ...
+    return render(request, 'accounts/signup.html', context)
+
+def detail(request, pk):
+    ...
+    return render(request, 'accounts/detail.html', context)
+
+def login(request):
+    ...
+    return render(request, 'accounts/login.html', context)
+
+def logout(request):
+    auth_logout(request)
+    messages.warning(request, '로그아웃!')
+    return redirect('articles:index')
+
+@login_required
+def update(request):
+    ...
+    return render(request, 'accounts/update.html', context)
+
+def follow(request, pk):
+    # 팔로우 상태가 아니면, '팔로우' 누르면 추가(add)
+    # (이미) 팔로우 상태이면, '팔로우 취소' 버튼 누르면 삭제(remove)
+    return redirect('accounts:detail', pk)
+```
+<br>
+
+- html 수정(`팔로우 버튼`, `팔로우 수`)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+<p>팔로우: {{ user.followings.count }} | 팔로워: {{ user.followers.count }}</p>
+<a href="{% url 'accounts:follow' user.pk %}">팔로우</a>
+<div class="row">
+    <div class="col-6">
+        <h3>작성한 글</h3>
+        <p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+        {% for article in user.article_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+
+    <div class="col-6">
+        <h3>좋아요 누른 글</h3>
+        <p class="text-muted">{{ user.like_articles.count }}개 작성 완료</p>
+        {% for article in user.like_articles.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+```
+
+<br>
+
+---
+70. 팔로워 증가
+- view 수정
+```python
+# accounts/views.py
+def follow(request, pk):
+    # 팔로우 상태가 아니면, '팔로우' 누르면 추가(add)
+    # User: get_user_model()함수 호출하여 class 가지고 오기
+    # User = get_user_model()
+    # user = User.objects.get(pk=pk)
+    # 2줄을 밑 한줄로 표현
+    user = get_user_model().objects.get(pk=pk)
+    
+    # 팔로워 증가
+    user.followers.add(request.user)
+    # (이미) 팔로우 상태이면, '팔로우 취소' 버튼 누르면 삭제(remove)
+    return redirect('accounts:detail', pk)
+```
+<br>
+
+- 팔로우 생성/취소, 로그인한 유저만 팔로우 가능
+- view 수정(`follow`, `login_required`)
+```python
+# accounts/views.py
+@login_required
+def follow(request, pk):
+    # 프로필에 해당하는 유저를 로그인한 유저가!
+    user = get_user_model().objects.get(pk=pk)
+    # user에 followers의 all 전부들 중에 request.user가 있나요?
+    if request.user in user.followers.all():
+        # 있으면
+        # (이미) 팔로우 상태이면, '팔로우 취소' 버튼 누르면 삭제(remove)
+        user.followers.remove(request.user)
+    else:
+        # 없으면
+        # 팔로우 상태가 아니면, '팔로우' 누르면 추가(add)
+        user.followers.add(request.user)
+    return redirect('accounts:detail', pk)
+```
+<br>
+
+- html 수정(로그인 분기, 본인 팔로우버튼 if문 분기)
+```html
+<!-- accounts/templates/accounts/detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ user.username }}님의 프로필</h1>
+<p>{{ user.email }} | {{ user.full_name }}</p>
+<p>팔로우: {{ user.followings.count }} | 팔로워: {{ user.followers.count }}</p>
+
+{% if request.user != user %}
+<a href="{% url 'accounts:follow' user.pk %}">
+    {% if request.user in user.followers.all%}
+        팔로우 취소
+    {% else %}
+        팔로우
+    {% endif %}
+</a>
+{% endif %}
+
+<div class="row">
+    <div class="col-6">
+        <h3>작성한 글</h3>
+        <p class="text-muted">{{ user.article_set.count }}개 작성 완료</p>
+        {% for article in user.article_set.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+    <div class="col-6">
+        <h3>좋아요 누른 글</h3>
+        <p class="text-muted">{{ user.like_articles.count }}개 작성 완료</p>
+        {% for article in user.like_articles.all %}
+        <p>
+            {{ forloop.counter }}
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+```
+<br>
+
+- view 수정(본인 팔로우 불가능 if)
+```python
+# accounts/views.py
+@login_required
+def follow(request, pk):
+    user = get_user_model().objects.get(pk=pk)
+
+    if request.user == user:
+        messages.warning(request, '본인 팔로우 불가능!')
+        return redirect('accounts:detail', pk)
+        
+    if request.user in user.followers.all():
+        user.followers.remove(request.user)
+    else:
+        user.followers.add(request.user)
+    return redirect('accounts:detail', pk)
+```

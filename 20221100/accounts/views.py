@@ -62,3 +62,16 @@ def update(request):
         'form': form
     }
     return render(request, 'accounts/update.html', context)
+
+@login_required
+def follow(request, pk):
+    user = get_user_model().objects.get(pk=pk)
+    if request.user == user:
+        messages.warning(request, '본인 팔로우 불가능!')
+        return redirect('accounts:detail', pk)
+        
+    if request.user in user.followers.all():
+        user.followers.remove(request.user)
+    else:
+        user.followers.add(request.user)
+    return redirect('accounts:detail', pk)
