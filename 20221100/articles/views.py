@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST, require_GET, require_safe
 from .models import Article
 from .forms import ArticleForm, CommentForm
 
 # Create your views here.
+@require_safe
 def index(request):
     articles = Article.objects.order_by('-pk')
     context = {
@@ -31,7 +33,7 @@ def new(request):
     return render(request, 'articles/form.html', context)
 
 def detail(request, article_pk):
-    article = Article.objects.get(pk=article_pk)
+    article= get_object_or_404(Article, pk=article_pk)
     comment_form = CommentForm()
     context = {
         'article': article,
@@ -44,7 +46,7 @@ def detail(request, article_pk):
 from django.contrib.auth.decorators import login_required
 @ login_required
 def update(request, pk):
-    article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
     if request.user == article.user:
         if request.method == 'POST':
             article_form = ArticleForm(request.POST, request.FILES, instance=article)
@@ -63,13 +65,13 @@ def update(request, pk):
         return redirect('articles:detail', article.pk)
 
 def delete(request, pk):
-    article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
     article.delete()
     return redirect('articles:index')
 
 @login_required
 def comment_create(request, pk):
-    article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
     comment_form = CommentForm(request.POST)
 
     if comment_form.is_valid():
@@ -81,8 +83,7 @@ def comment_create(request, pk):
 
 @login_required
 def like(request, pk):
-    article = Article.objects.get(pk=pk)
-    # if article.like_users.filter(id=request.user.id).exists()
+    article = get_object_or_404(Article, pk=pk)
     if request.user in article.like_users.all():
         article.like_users.remove(request.user)
     else:

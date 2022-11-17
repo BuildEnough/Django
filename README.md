@@ -4361,6 +4361,197 @@ def follow(request, pk):
     if request.user == user:
         messages.warning(request, '본인 팔로우 불가능!')
         return redirect('accounts:detail', pk)
+
+    if request.user in user.followers.all():
+        user.followers.remove(request.user)
+    else:
+        user.followers.add(request.user)
+    return redirect('accounts:detail', pk)
+```
+
+<br>
+
+---
+71. 404 error
+- 404 에러(`get_object_or_404`)
+- 사용자가 억지로 url로 들어갈 경우 500번대 에러 => 404 Page not found 발생하도록 만듬
+- view 설정
+```python
+# articles/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Article
+from .forms import ArticleForm, CommentForm
+
+# Create your views here.
+def index(request):
+    articles = Article.objects.order_by('-pk')
+    context = {
+        'articles': articles
+    }
+    return render(request, 'articles/index.html', context)
+
+@login_required 
+def new(request):
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST, request.FILES)
+        if article_form.is_valid():
+            article = article_form.save(commit=False)
+            # 로그인한 유저 => 작성자임
+            article.user = request.user
+            article.save()
+            messages.success(request, '글 작성 완료')
+            return redirect('articles:index')
+    else:
+        article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/form.html', context)
+
+def detail(request, article_pk):
+    # article = Article.objects.get(pk=article_pk)
+    article= get_object_or_404(Article, pk=article_pk)
+    comment_form = CommentForm()
+    context = {
+        'article': article,
+        'comments': article.comment_set.all(),
+        'comment_form': comment_form,
+    }
+    return render(request, 'articles/detail.html', context)
+
+
+from django.contrib.auth.decorators import login_required
+@ login_required
+def update(request, pk):
+    # article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
+    if request.user == article.user:
+        if request.method == 'POST':
+            article_form = ArticleForm(request.POST, request.FILES, instance=article)
+            if article_form.is_valid():
+                article_form.save()
+                messages.success(request, '글 수정 완료')
+                return redirect('articles:detail', article.pk)
+        else:
+            article_form = ArticleForm(instance=article)
+        context = {
+            'article_form': article_form
+        }
+        return render(request, 'articles/form.html', context)
+    else:
+        messages.warning(request, '작성자만 작성 가능!')
+        return redirect('articles:detail', article.pk)
+
+def delete(request, pk):
+    # article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
+    article.delete()
+    return redirect('articles:index')
+
+@login_required
+def comment_create(request, pk):
+    # article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment = comment_form.save(commit=False)
+        comment.article = article
+        comment.user = request.user
+        comment.save()
+    return redirect('articles:detail', article.pk)
+
+@login_required
+def like(request, pk):
+    # article = Article.objects.get(pk=pk)
+    article = get_object_or_404(Article, pk=pk)
+    if request.user in article.like_users.all():
+        article.like_users.remove(request.user)
+    else:
+        article.like_users.add(request.user)
+
+    return redirect('articles:detail', pk)
+```
+<br>
+
+- view 수정
+```python
+# accounts/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm
+
+# Create your views here.
+def signup(request):
+    if request.method =='POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save() # ModelForm의 save 메서드의 리턴값은 해당 모델의 인스턴스
+            auth_login(request, user) # 로그인 함수 호출
+            return redirect('articles:index')
+    else:
+        form = CustomUserCreationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/signup.html', context)
+
+def detail(request, pk):
+    # user = get_user_model().objects.get(pk=pk)
+    user = get_object_or_404(get_user_model(), pk=pk)
+    context = {
+        'user': user
+    }
+
+    return render(request, 'accounts/detail.html', context)
+
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            return redirect(request.GET.get('next') or 'articles:index')
+        pass
+    else:
+        form  = AuthenticationForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/login.html', context)
+
+def logout(request):
+    auth_logout(request)
+    messages.warning(request, '로그아웃!')
+    return redirect('articles:index')
+
+@login_required
+def update(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:detail', request.user.pk)
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = {
+        'form': form
+    }
+    return render(request, 'accounts/update.html', context)
+
+@login_required
+def follow(request, pk):
+    # user = get_user_model().objects.get(pk=pk)
+    user = get_object_or_404(get_user_model(), pk=pk)
+    if request.user == user:
+        messages.warning(request, '본인 팔로우 불가능!')
+        return redirect('accounts:detail', pk)
         
     if request.user in user.followers.all():
         user.followers.remove(request.user)
@@ -4368,3 +4559,29 @@ def follow(request, pk):
         user.followers.add(request.user)
     return redirect('accounts:detail', pk)
 ```
+
+<br>
+
+---
+72. decorator
+- view 설정(`require_POST`, `require_GET`, `require_safe`)
+- redirect는 get 요청만 가능: URL 자체만 rediration 해줌, POST 요청시 보낸 데이터를 rederation 해주지 않는다(https://developer.mozilla.org/ko/docs/Web/HTTP/Redirections)
+```python
+# articles/views.py
+# https://www.postman.com/: 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+from django.views.decorators.http import require_POST, require_GET, require_safe
+
+from .models import Article
+from .forms import ArticleForm, CommentForm
+
+@require_safe
+def index(request):
+    articles = Article.objects.order_by('-pk')
+    context = {
+        'articles': articles
+    }
+    return render(request, 'articles/index.html', context)

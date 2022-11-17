@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
@@ -23,7 +23,7 @@ def signup(request):
     return render(request, 'accounts/signup.html', context)
 
 def detail(request, pk):
-    user = get_user_model().objects.get(pk=pk)
+    user = get_object_or_404(get_user_model(), pk=pk)
     context = {
         'user': user
     }
@@ -65,7 +65,7 @@ def update(request):
 
 @login_required
 def follow(request, pk):
-    user = get_user_model().objects.get(pk=pk)
+    user = get_object_or_404(get_user_model(), pk=pk)
     if request.user == user:
         messages.warning(request, '본인 팔로우 불가능!')
         return redirect('accounts:detail', pk)
