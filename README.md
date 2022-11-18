@@ -4593,9 +4593,17 @@ def index(request):
 # 비동기 AJAX
 - html 생성(CDN 가져오기)
 - https://axios-http.com/kr/docs/intro
+1) 어떤 이벤트일때 요청을 보낼지
+    - form을 작성하면
+    - /articles/<pk>/comments/
+2) 서버에서 어떤 응답을 JSON으로 보내서
+    - 댓글 정보를 보내서
+3) DOM 조작을 어떻게 할지
+    - 댓글 목록 추가
+
 <br>
 
-73. 좋아요 비동기
+1.  좋아요 비동기
 - html 수정(`like-btn`, `script`)
 ```html
 <!-- articles/templates/articles/detail.html -->
@@ -4948,4 +4956,210 @@ def like(request, pk):
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
 ```
-- 완료
+
+<br>
+
+---
+74. 댓글 비동기
+- html 수정(`id="comment-form"`, `script`생성 )
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+
+{% if request.user.is_authenticated %}
+    {% if request.user in article.like_users.all %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart-fill"></i>
+    {% else %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart"></i> 
+    {% endif %}
+{% endif %}
+<span id="like-count">{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form id="comment-form" action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const likeBtn = document.querySelector('#like-btn')
+    likeBtn.addEventListener('click', function (event) {
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+        .then(response => {
+            console.log(response)
+            console.log(response.data)
+            // event.target.classList.toggle('bi-heart')
+            // event.target.classList.toggle('bi-heart-fill')
+            if (response.data.isLiked === true) {
+                event.target.classList.add('bi-heart-fill')
+                event.target.classList.remove('bi-heart')
+            } else {
+                event.target.classList.add('bi-heart')
+                event.target.classList.remove('bi-heart-fill')
+            }
+            const likeCount = document.querySelector('#like-count')
+            likeCount.innerText = response.data.likeCount
+        })
+    })
+</script>
+
+<script>
+    // 댓글
+    // (1) 댓글 폼
+    const commentForm = document.querySelector('#comment-form')
+    // (2) 제출하면, 함수 실행시킴
+    commentForm.addEventListener('submit', function() {
+        console.log('hi')
+
+    })
+</script>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- console: 댓글 입력시 `hi` 나타남(잠깐 나타났다가 사라짐)
+
+<br>
+
+- html 수정(`script`, `event.preventDefault();`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    // 댓글
+    // (1) 댓글 폼
+    const commentForm = document.querySelector('#comment-form')
+    // (2) 제출하면, 함수 실행시킴
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('hi')
+
+    })
+</script>
+```
+- console: 댓글을 입력하면 `hi` 사라지지않고 그래로 표시됨
+
+<br>
+
+- html 수정(데이터 보내기, `action="{% url 'articles:comment_create' article.pk %}" method="POST"` 삭제, `script` 수정)
+```html
+<!-- articles/templates/articles/detail.html -->
+...
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+
+{% comment %} <form id="comment-form" action="{% url 'articles:comment_create' article.pk %}" method="POST"> {% endcomment %}
+<form id="comment-form" data-article-id="{{ article.pk }}">
+
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+...
+
+<script>
+    // 댓글
+    // (1) 댓글 폼
+    const commentForm = document.querySelector('#comment-form')
+    // (2) 제출하면, 함수 실행시킴
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`
+        })
+
+    })
+</script>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- console: 서버에 오류표시됨(`CSRF token missing or incorrect.`)
+
+<br>
+
+- csrf 토큰 보내기
+- https://docs.djangoproject.com/en/4.1/howto/csrf/
+- html 수정(script: `csrftoken`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const commentForm = document.querySelector('#comment-form')
+
+    // csrf
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`,
+            headers: {'X-CSRFToken': csrftoken},
+        })
+    })
+</script>
+```
+- 댓글 작성이 안됨: 서버로 보냈지만, DB에 저장이 안되어 있기 떄문(데이터를 준적이 없기 때문)
+
+<br>
+
+- 서버에 데이터 넘겨주기
+- html 수정(`then`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const commentForm = document.querySelector('#comment-form')
+
+    // csrf
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`,
+            headers: {'X-CSRFToken': csrftoken},
+            // data 넘겨주는 방법 공식처럼 외우기
+            data: new FormData(commentForm)
+        })
+        .then(response => {
+            console.log(response.data)
+        })
+    })
+</script>
+```
+<br>
+
