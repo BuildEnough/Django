@@ -4585,3 +4585,367 @@ def index(request):
         'articles': articles
     }
     return render(request, 'articles/index.html', context)
+```
+
+<br>
+
+---
+# 비동기 AJAX
+- html 생성(CDN 가져오기)
+- https://axios-http.com/kr/docs/intro
+<br>
+
+73. 좋아요 비동기
+- html 수정(`like-btn`, `script`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+
+<span>
+{% if request.user.is_authenticated %}
+    <a class="like-heart" href="{% url 'articles:like' article.pk %}">
+    {% if request.user in article.like_users.all %}
+        <i id="like-btn" class="bi bi-heart-fill"></i>
+    {% else %}
+        <i id="like-btn" class="bi bi-heart"></i> 
+    {% endif%}</a>
+{% endif %}
+
+{{ article.like_users.count }}</span>
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+
+<script>
+    // (1) 좋아요 버튼
+    const likeBtn = document.querySelector('#like-btn')
+    // (2) 좋아요 버튼 클릭 => 함수 실행
+    likeBtn.addEventListener('click', function () {
+        alert('좋아!')
+    })
+</script>
+
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- 좋아요 버튼 클릭하면 알람창 뜸
+
+<br>
+
+- 서버 요청보내기
+- html 수정(CDN 추가, a태그 제거(console에서 깜박거리는 이유), `script`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+<span>
+{% if request.user.is_authenticated %}
+    {% if request.user in article.like_users.all %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart-fill"></i>
+    {% else %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart"></i> 
+    {% endif %}
+{% endif %}
+{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // (1) 좋아요 버튼
+    const likeBtn = document.querySelector('#like-btn')
+    // (2) 좋아요 버튼 클릭 => 함수 실행
+    likeBtn.addEventListener('click', function (event) {
+        // 서버로 비동기 요청하고 싶음
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+    })
+</script>
+
+
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+<br>
+
+- html 수정(`script` 부분: `then`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // (1) 좋아요 버튼
+    const likeBtn = document.querySelector('#like-btn')
+    // (2) 좋아요 버튼 클릭 => 함수 실행
+    likeBtn.addEventListener('click', function (event) {
+        // 서버로 비동기 요청하고 싶음
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+        .then(response => {
+            console.log(response)
+        })
+    })
+</script>
+```
+- `console`: 200과 함께 html이 옴
+
+<br>
+
+- views 수정(`JsonResponse` 클래스, `like` 함수 수정)
+```python
+# articles/views.py
+from django.http import JsonResponse
+@login_required
+def like(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    if request.user in article.like_users.all():
+        article.like_users.remove(request.user)
+    else:
+        article.like_users.add(request.user)
+
+    # return redirect('articles:detail', pk)
+    return JsonResponse({'hi': '안녕'})
+```
+- 개발자 도구(console): data에 {'hi': '안녕'}이 나옴
+
+<br>
+
+- view 수정(`is_liked`)
+```python
+from django.http import JsonResponse
+@login_required
+def like(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    if request.user in article.like_users.all():
+        article.like_users.remove(request.user)
+        is_liked = False
+    else:
+        article.like_users.add(request.user)
+        is_liked = True
+    return JsonResponse({'isLiked': is_liked})
+```
+<br>
+
+- html 수정(`script` 부분)
+- 방법1
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const likeBtn = document.querySelector('#like-btn')
+    likeBtn.addEventListener('click', function (event) {
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+
+        .then(response => {
+            console.log(response)
+            console.log(response.data)
+            event.target.classList.toggle('bi-heart')
+            event.target.classList.toggle('bi-heart-fill')
+        })
+
+    })
+</script>
+```
+- 방법2(`script` 부분)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const likeBtn = document.querySelector('#like-btn')
+    likeBtn.addEventListener('click', function (event) {
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+
+        .then(response => {
+            console.log(response)
+            console.log(response.data)
+            // event.target.classList.toggle('bi-heart')
+            // event.target.classList.toggle('bi-heart-fill')
+            if (response.data.isLiked === true) {
+                event.target.classList.add('bi-heart-fill')
+                event.target.classList.remove('bi-heart')
+            } else {
+                event.target.classList.add('bi-heart')
+                event.target.classList.remove('bi-heart-fill')
+            }
+        })
+
+    })
+</script>
+```
+- terminal: `"GET /articles/3/like/ HTTP/1.1" 200 18` => `"GET /articles/3/like/ HTTP/1.1" 200 17` 계속 바뀜
+
+<br>
+
+- heart 숫자 바꾸기
+- view 수정(`context`: like 값 들, `count`값)
+```python
+# articles/views.py
+from django.http import JsonResponse
+@login_required
+def like(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    if request.user in article.like_users.all():
+        article.like_users.remove(request.user)
+        is_liked = False
+    else:
+        article.like_users.add(request.user)
+        is_liked = True
+    context = {'isLiked': is_liked, 'likeCount': article.like_users.count() }
+    return JsonResponse(context)
+```
+
+- html 수정(`<span id="like-count">{{ article.like_users.count }}</span>`, `likeCount.innerText = response.data.likeCount`)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+
+{% if request.user.is_authenticated %}
+    {% if request.user in article.like_users.all %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart-fill"></i>
+    {% else %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart"></i> 
+    {% endif %}
+{% endif %}
+<span id="like-count">{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form action="{% url 'articles:comment_create' article.pk %}" method="POST">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+{% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+{% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const likeBtn = document.querySelector('#like-btn')
+    likeBtn.addEventListener('click', function (event) {
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+        .then(response => {
+            console.log(response)
+            console.log(response.data)
+            if (response.data.isLiked === true) {
+                event.target.classList.add('bi-heart-fill')
+                event.target.classList.remove('bi-heart')
+            } else {
+                event.target.classList.add('bi-heart')
+                event.target.classList.remove('bi-heart-fill')
+            }
+            const likeCount = document.querySelector('#like-count')
+            likeCount.innerText = response.data.likeCount
+        })
+    })
+</script>
+
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- 완료
