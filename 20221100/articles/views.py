@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -79,7 +80,13 @@ def comment_create(request, pk):
         comment.article = article
         comment.user = request.user
         comment.save()
-    return redirect('articles:detail', article.pk)
+        context = {
+            'content': comment.content,
+            'userName': comment.user.username
+        }
+        return JsonResponse(context)
+    # else:
+    #     return 
 
 from django.http import JsonResponse
 @login_required

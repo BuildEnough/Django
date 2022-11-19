@@ -37,12 +37,14 @@
 {% endif %}
 
 <hr>
-{% for comment in comments %}
+<div id="comments">
+    {% for comment in comments %}
     <p>{{ comment.user.username }} | {{ comment.content }}</p>
     <hr>
-{% empty %}
+    {% empty %}
     <p>댓글 없엉 ㅠㅠ</p>
-{% endfor %}
+    {% endfor %}
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
@@ -82,11 +84,17 @@
             method: 'post',
             url: `/articles/${event.target.dataset.articleId}/comments/`,
             headers: {'X-CSRFToken': csrftoken},
-            // data 넘겨주는 방법 공식처럼 외우기
             data: new FormData(commentForm)
         })
         .then(response => {
             console.log(response.data)
+            // 댓글을 추가하는 로직
+            const comments = document.querySelector('#comments')
+            const p = document.createElement('p')
+            p.innerText = `${response.data.userName} | ${response.data.content}`
+            // <p>{{ comment.user.username }} | {{ comment.content }}</p>
+            const hr = document.createElement('hr')
+            comments.append(p, hr)
         })
     })
 </script>

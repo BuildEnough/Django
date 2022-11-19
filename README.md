@@ -5163,3 +5163,152 @@ def like(request, pk):
 ```
 <br>
 
+- 댓글정보 묶어서 보내주기
+- 기존 view
+```python
+# articles/views.py
+@login_required
+def comment_create(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment = comment_form.save(commit=False)
+        comment.article = article
+        comment.user = request.user
+        comment.save()
+    return redirect('articles:detail', article.pk)
+```
+<br>
+
+- 수정 후 view(`context`)
+```python
+# articles/views.py
+@login_required
+def comment_create(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    comment_form = CommentForm(request.POST)
+
+    if comment_form.is_valid():
+        comment = comment_form.save(commit=False)
+        comment.article = article
+        comment.user = request.user
+        comment.save()
+        context = {
+            'content': comment.content,
+            'userName': comment.user.username
+        }
+        return JsonResponse(context)
+```
+- console: 댓글입력 => `content`와 `userName` 보임
+
+<br>
+
+- html 수정(`div id="comments"`, `then` 부분)
+```html
+<!-- articles/templates/articles/detail.html -->
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block content %}
+<h2>{{ article.title }}</h2>
+<p>{{ article.pk }}번</p>
+<h3><a href="{% url 'accounts:detail' article.user.id %}">{{ article.user.username }}</a></h3>
+<p>{{ article.created_at|date:'SHORT_DATETIME_FORMAT' }} | {{ article.updated_at|date:'y-m-d l' }}</p>
+
+
+{% if request.user.is_authenticated %}
+    {% if request.user in article.like_users.all %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart-fill"></i>
+    {% else %}
+        <i id="like-btn" data-article-id="{{ article.pk }}" class="bi bi-heart"></i> 
+    {% endif %}
+{% endif %}
+<span id="like-count">{{ article.like_users.count }}</span>
+
+{% if request.user == article.user %}
+<p>
+    <a href="{% url 'articles:update' article.pk %}">글 수정</a>
+</p>
+{% endif %}
+
+<p>{{ article.content }}</p>
+{% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.image }}" width="400" height="300">
+{% endif %}
+
+<h4 class="my-3">댓글</h4>
+{% if request.user.is_authenticated %}
+<form id="comment-form" data-article-id="{{ article.pk }}">
+    {% csrf_token %}
+    {% bootstrap_form comment_form layout='inline' %}
+    {% bootstrap_button button_type='submit' content='OK' %}
+</form>
+{% endif %}
+
+<hr>
+<div id="comments">
+    {% for comment in comments %}
+    <p>{{ comment.user.username }} | {{ comment.content }}</p>
+    <hr>
+    {% empty %}
+    <p>댓글 없엉 ㅠㅠ</p>
+    {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const likeBtn = document.querySelector('#like-btn')
+    likeBtn.addEventListener('click', function (event) {
+        console.log(event.target.dataset)
+        axios({
+            method: 'get',
+            url: `/articles/${event.target.dataset.articleId}/like/`
+        })
+        .then(response => {
+            console.log(response)
+            console.log(response.data)
+            // event.target.classList.toggle('bi-heart')
+            // event.target.classList.toggle('bi-heart-fill')
+            if (response.data.isLiked === true) {
+                event.target.classList.add('bi-heart-fill')
+                event.target.classList.remove('bi-heart')
+            } else {
+                event.target.classList.add('bi-heart')
+                event.target.classList.remove('bi-heart-fill')
+            }
+            const likeCount = document.querySelector('#like-count')
+            likeCount.innerText = response.data.likeCount
+        })
+    })
+</script>
+
+<script>
+    const commentForm = document.querySelector('#comment-form')
+
+    // csrf
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`,
+            headers: {'X-CSRFToken': csrftoken},
+            data: new FormData(commentForm)
+        })
+        .then(response => {
+            console.log(response.data)
+            // 댓글을 추가하는 로직
+            const comments = document.querySelector('#comments')
+            const p = document.createElement('p')
+            p.innerText = `${response.data.userName} | ${response.data.content}`
+            // <p>{{ comment.user.username }} | {{ comment.content }}</p>
+            const hr = document.createElement('hr')
+            comments.append(p, hr)
+        })
+    })
+</script>
+<a href="{% url 'articles:index' %}">메인</a>
+{% endblock %}
+```
+- 비동기 성공(하지만 1명 서비스)
+- `article.comment.all() => JSON으로 바꿈 => 기존것을 없애고 바꾼것을 반복해서 붙이면 여러명 가능
