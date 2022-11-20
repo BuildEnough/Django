@@ -5312,3 +5312,75 @@ def comment_create(request, pk):
 ```
 - 비동기 성공(하지만 1명 서비스)
 - `article.comment.all() => JSON으로 바꿈 => 기존것을 없애고 바꾼것을 반복해서 붙이면 여러명 가능
+- 댓글에 작성해둔 내용 그래도 남아있음 => 지워줘야 함
+
+<br>
+
+- html 수정(script 부분: `commentForm.reset`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const commentForm = document.querySelector('#comment-form')
+
+    // csrf
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`,
+            headers: {'X-CSRFToken': csrftoken},
+            data: new FormData(commentForm)
+        })
+        .then(response => {
+            console.log(response.data)
+            // 댓글을 추가하는 로직
+            const comments = document.querySelector('#comments')
+            const p = document.createElement('p')
+            p.innerText = `${response.data.userName} | ${response.data.content}`
+            // <p>{{ comment.user.username }} | {{ comment.content }}</p>
+            const hr = document.createElement('hr')
+            comments.append(p, hr)
+            commentForm.reset()
+        })
+    })
+</script>
+```
+- 댓글 내용 지워짐
+
+<br>
+
+---
+75. DOM 조작(비동기 한줄씩이 아닌 태그 덩어리 가져오기)
+- html 수정(`beforeend`, `${ response.data.userName } | ${ response.data.content }`)
+```html
+<!-- articles/templates/articles/detail.html -->
+<script>
+    const commentForm = document.querySelector('#comment-form')
+
+    // csrf
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+    commentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        axios({
+            method: 'post',
+            url: `/articles/${event.target.dataset.articleId}/comments/`,
+            headers: {'X-CSRFToken': csrftoken},
+            data: new FormData(commentForm)
+        })
+        .then(response => {
+            console.log(response.data)
+            const comments = document.querySelector('#comments')
+            // const p = document.createElement('p')
+            // p.innerText = `${response.data.userName} | ${response.data.content}`
+            // const hr = document.createElement('hr')
+            // comments.append(p, hr)
+            comments.insertAdjacentHTML('beforeend', `
+            <p> ${ response.data.userName } | ${ response.data.content } </p>
+            <hr>
+            `)
+            commentForm.reset()
+        })
+    })
+</script>
+```
