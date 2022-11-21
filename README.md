@@ -205,6 +205,7 @@ app_name = 'articles'
 urlpatterns = [
     path('index/', views.index, name='index'),
     path('create/', views.create, name='create'),
+    path('new/', views.new, name='new'),
 ]
 ```
    - views 생성
@@ -377,7 +378,7 @@ def new(request):
 <br>
 
 ---
-18. vaild 유효성 검사
+18. valid 유효성 검사
    - views 수정
 ```python
 def new(request):
@@ -391,7 +392,8 @@ def new(request):
         }
         return render(request, 'articles/create.html', context)
 ```
-   
+- create path와 crate def는 이 시점에서 사라져도 무방함   
+
 <br>
 
 ---
