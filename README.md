@@ -447,7 +447,9 @@ def detail(request, article_pk):
     }
     return render(request, 'articles/detail.html', context)
 ```
-   - index html 수정
+<br>
+
+- index html 수정
 ```html
 <!-- articles/templates/articles/index.html -->
 {% extends 'base.html' %}
@@ -461,7 +463,9 @@ def detail(request, article_pk):
 {% endfor %}
 {% endblock %}
 ```
-   - detail html 생성
+<br>
+
+- detail html 생성
 ```html
 <!-- articles/templates/articles/detail.html -->
 {% extends 'base.html' %}
@@ -491,7 +495,9 @@ urlpatterns = [
     path('<int:pk>/update', views.update, name='update'),
 ]
 ```
-   - views 수정
+<br>
+
+- views 수정
 ```python
 # articles/views.py
 from django.shortcuts import render, redirect
@@ -540,7 +546,9 @@ def update(request, pk):
     }
     return render(request, 'articles/update.html', context)
 ```
-   - html 수정
+<br>
+
+- html 수정
 ```html
 <!-- articles/templates/articles/detail.html -->
 {% extends 'base.html' %}
@@ -552,7 +560,9 @@ def update(request, pk):
 <a href="{% url 'articles:update' article.pk %}">글 수정</a>
 {% endblock %}
 ```
-   - html 생성
+<br>
+
+- html 생성
 ```html
 <!-- articles/templates/articles/update.html -->
 {% extends 'base.html' %}

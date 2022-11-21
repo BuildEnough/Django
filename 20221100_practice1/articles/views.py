@@ -12,18 +12,23 @@ def index(request):
     return render(request, 'articles/index.html', context)
 
 def new(request):
-    article_form = ArticleForm(request.POST)
-    if article_form.is_valid():
-        article_form.save()
-        return redirect('articles:index')
+    if request.method == 'POST':
+        article_form = ArticleForm(request.POST)
+        if article_form.is_valid():
+            article_form.save()
+            return redirect('articles:index')
     else:
+        article_form = ArticleForm()
         context = {
         'article_form': article_form
         }
     return render(request, 'articles/create.html', context)
+
+# def update(request, pk):
+#     article.form = ArticleForm()
         
 def detail(request, pk):
-    article = Article.objects.get(pk)
+    article = Article.objects.get(pk=pk)
     context = {
         'article': article,
     }
