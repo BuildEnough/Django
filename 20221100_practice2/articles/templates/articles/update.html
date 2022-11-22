@@ -1,9 +1,0 @@
-{% extends 'base.html' %}
-{% block content %}
-<form action="" method="POST">
-    {% csrf_token %}
-    {{ article_form.as_p }}
-    <input type="submit" value="입력">
-</form>
-<a href="{% url 'articles:index' %}">메인 화면</a>
-{% endblock %}

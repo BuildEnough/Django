@@ -719,7 +719,6 @@ INSTALLED_APPS = (
     # ...
 )
 ```
-
 <br>
 
 - html 수정
@@ -743,6 +742,9 @@ INSTALLED_APPS = (
 </body>
 </html>
 ```
+- base:`{% load django_bootstrap5 %}`, `{% bootstrap_css %}`
+
+<br>
 
 ```html
 <!-- articles/templates/articles/create.html -->
@@ -765,6 +767,7 @@ INSTALLED_APPS = (
 <a href="{% url 'articles:index' %}">메인</a>
 {% endblock %}
 ```
+- `{% extends 'base.html' %}`, `{% load django_bootstrap5 %}` 필요함
 
 <br>
 
