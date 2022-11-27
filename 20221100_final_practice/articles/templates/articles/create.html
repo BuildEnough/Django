@@ -1,11 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
-<form action="{% url 'articles:new' %}">
-    <label for="title">제목: </label>
-    <input type="text" name="title" id="">
-
-    <label for="content">내용: </label>
-    <input type="text" name="content" id="">
+<form action="{% url 'articles:new' %}" method="POST">
+    {% csrf_token %}
+    {{ article_form.as_p}}
     <input type="submit" value="입력">
 </form>
 <a href="{% url 'articles:index' %}">메인화면</a>

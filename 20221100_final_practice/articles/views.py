@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Article
+from .forms import ArticleForm
 
 # Create your views here.
 
@@ -11,10 +12,14 @@ def index(request):
     return render(request, 'articles/index.html', context)
 
 def create(request):
-    return render(request, 'articles/create.html')
+    article_form = ArticleForm()
+    context = {
+        'article_form': article_form
+    }
+    return render(request, 'articles/create.html', context)
 
 def new(request):
-    title = request.GET.get('title')
-    content = request.GET.get('content')
+    title = request.POST.get('title')
+    content = request.POST.get('content')
     Article.objects.create(title=title, content=content)
     return redirect('articles:index')
