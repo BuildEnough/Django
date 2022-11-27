@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
-{% block %}
-INDEX 페이지
+{% block content %}
+<a href="{% url 'articles:create' %}">글 작성</a>
+{% for article in articles %}
+    <p>{{ article.title}}</p>
+    <p>{{ aritcle.content }}</p>
+    <p>{{ article.created_at }} | {{ article.updated_at }}</p>
+{% endfor %}
 {% endblock %}
